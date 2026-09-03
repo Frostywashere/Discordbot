@@ -186,18 +186,9 @@ client.on("messageCreate", async (message) => {
     // CHANNEL CONFIRMATION
     // ================================
 
-    await message.reply(
-      `✅ ${message.author}, you've been **Allowlisted**! Check your DMs.`
-    );
-
   } catch (error) {
 
     console.error("Something went wrong:", error);
-
-    await message.reply(
-      "❌ I couldn't give you the Allowlisted role. Make sure my bot role is above **Allowlisted** and has **Manage Roles** permission."
-    ).catch(() => {});
-
   }
 
 });
