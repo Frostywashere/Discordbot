@@ -1,0 +1,16 @@
+{
+  "name": "atlanta-heights-wl-bot",
+  "version": "1.0.0",
+  "description": "Discord bot that gives the Allowlisted role when a member says WL in the configured channel.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "discord.js": "^14.27.0",
+    "dotenv": "^16.4.7"
+  }
+}
