@@ -450,20 +450,12 @@ client.once(
       const guild =
         whitelistChannel.guild;
 
-      // ==================================================
-      // CLEAR COMMAND
-      // ==================================================
-
       const clearCommand =
         new SlashCommandBuilder()
           .setName("clear")
           .setDescription(
             "Delete messages from this channel."
           );
-
-      // ==================================================
-      // SETUP TICKETS COMMAND
-      // ==================================================
 
       const setupTicketsCommand =
         new SlashCommandBuilder()
@@ -628,18 +620,6 @@ client.on(
           ephemeral: true,
         });
 
-        console.log(
-          "========== TICKET PANEL DEBUG =========="
-        );
-
-        console.log(
-          `Ticket emoji ID: ${ticketEmojiId}`
-        );
-
-        console.log(
-          `Ticket emoji name: ${ticketEmojiName}`
-        );
-
         const panelChannel =
           await client.channels.fetch(
             ticketPanelChannelId
@@ -674,10 +654,6 @@ client.on(
             panelImagePath
           );
 
-        console.log(
-          `Ticket panel image exists: ${panelImageExists}`
-        );
-
         // ==================================================
         // PANEL EMBED
         // ==================================================
@@ -687,7 +663,7 @@ client.on(
             .setColor(0x0066ff)
 
             .setTitle(
-              `<:c5c3990dd5fc4872b34ac7e02bd290d2:1545228451630415942> Atlanta Heights Support Tickets`
+              "<:c5c3990dd5fc4872b34ac7e02bd290d2:1545228451630415942> Atlanta Heights Support Tickets"
             )
 
             .setDescription(
@@ -800,10 +776,6 @@ client.on(
           },
         ];
 
-        // ==================================================
-        // ADD OPTIONS
-        // ==================================================
-
         for (
           const option of ticketOptions
         ) {
@@ -861,10 +833,6 @@ client.on(
 
         console.log(
           "SUCCESS: Ticket panel sent."
-        );
-
-        console.log(
-          "========== END TICKET PANEL DEBUG =========="
         );
 
         await interaction.editReply({
@@ -1079,31 +1047,32 @@ client.on(
             );
 
         // ==================================================
-        // TICKET EMBED
+        // TICKET OPENED EMBED
         // ==================================================
 
         const ticketEmbed =
           new EmbedBuilder()
+
             .setColor(0x0066ff)
 
             .setTitle(
-              ticketType
+              "<:c5c3990dd5fc4872b34ac7e02bd290d2:1545228451630415942> Your ticket has been opened"
             )
 
             .setDescription(
-              `Hello <@${interaction.user.id}>!\n\n` +
+              "Our staff have been notified and a member of our team will be with you shortly, please do not ping staff unless given explicit permission by them.\n\n" +
 
-              `Thank you for opening a **${ticketType}** ticket.\n\n` +
-
-              `A member of the <@&${staffRoleId}> team will assist you shortly.\n\n` +
-
-              `Please explain your issue and provide any information that may help staff.`
+              "Please be respectful and ensure to be as detailed as possible to make sure our team have as much knowledge to assist you as best as they can."
             )
 
             .setFooter({
               text:
-                "Atlanta Heights RP Support",
+                "Atlanta Heights RP • Support",
             });
+
+        // ==================================================
+        // SEND TICKET MESSAGE
+        // ==================================================
 
         await ticketChannel.send({
 
@@ -1535,11 +1504,12 @@ client.on(
       }
 
       // ==================================================
-      // CREATE DM EMBED
+      // DM EMBED
       // ==================================================
 
       const dmEmbed =
         new EmbedBuilder()
+
           .setColor(0x0066ff)
 
           .setTitle(
@@ -1680,7 +1650,6 @@ client.on(
         `${message.author.tag} was successfully allowlisted.`
       );
 
-      // NO PUBLIC RESPONSE
       return;
 
     } catch (error) {
