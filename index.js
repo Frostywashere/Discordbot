@@ -1,6 +1,5 @@
 require("dotenv").config();
 const fs = require("fs");
-const path = require("path");
 
 const {
   Client,
@@ -193,9 +192,7 @@ async function buildTranscript(channel) {
         `[${timestamp}] ${username}: ${content}\n`;
 
       if (message.attachments.size) {
-        for (
-          const attachment of message.attachments.values()
-        ) {
+        for (const attachment of message.attachments.values()) {
           transcript +=
             `Attachment: ${attachment.url}\n`;
         }
@@ -203,7 +200,6 @@ async function buildTranscript(channel) {
     }
 
     return transcript;
-
   } catch (error) {
     console.error(
       "Transcript error:",
@@ -259,9 +255,7 @@ async function sendTranscript(channel) {
 
         permissionOverwrites: [
           {
-            id:
-              channel.guild.roles.everyone.id,
-
+            id: channel.guild.roles.everyone.id,
             deny: [
               PermissionFlagsBits.ViewChannel,
             ],
@@ -269,7 +263,6 @@ async function sendTranscript(channel) {
 
           {
             id: staffRoleId,
-
             allow: [
               PermissionFlagsBits.ViewChannel,
               PermissionFlagsBits.SendMessages,
@@ -308,7 +301,6 @@ async function sendTranscript(channel) {
     );
 
     return transcriptChannel;
-
   } catch (error) {
     console.error(
       "Failed to save transcript:",
@@ -417,7 +409,6 @@ client.once("ready", async () => {
     console.log(
       `Registered /clear and /setup-tickets in ${guild.name}`
     );
-
   } catch (error) {
     console.error(
       "Command registration error:",
@@ -433,7 +424,6 @@ client.once("ready", async () => {
 client.on(
   "interactionCreate",
   async (interaction) => {
-
     try {
 
       // ==========================================
@@ -450,7 +440,6 @@ client.on(
             interaction.user.id
           )
         ) {
-
           await interaction.reply({
             content:
               "❌ You are not authorized to use this command.",
@@ -508,7 +497,6 @@ client.on(
             for (
               const message of oldMessages.values()
             ) {
-
               try {
                 await message.delete();
                 deleted++;
@@ -544,7 +532,6 @@ client.on(
             interaction.user.id
           )
         ) {
-
           await interaction.reply({
             content:
               "❌ You are not authorized to use this command.",
@@ -567,7 +554,6 @@ client.on(
           !panelChannel ||
           !panelChannel.isTextBased()
         ) {
-
           await interaction.editReply({
             content:
               "❌ I couldn't find the ticket panel channel.",
@@ -647,10 +633,12 @@ client.on(
                   .toLowerCase()
                   .replace(/[^a-z0-9]+/g, "_")
               )
-              .setEmoji(
-                ticketEmoji.name,
-                ticketEmoji.id
-              )
+
+              // CUSTOM ATLANTA HEIGHTS EMOJI
+              .setEmoji({
+                id: ticketEmoji.id,
+                name: null
+              })
           );
         }
 
@@ -699,6 +687,7 @@ client.on(
           interaction.values[0];
 
         const typeMap = {
+
           general_support:
             "General Support",
 
@@ -778,6 +767,8 @@ client.on(
           return;
         }
 
+        // Prevent duplicate open tickets
+
         const existingTicket =
           guild.channels.cache.find(
             (channel) =>
@@ -807,6 +798,7 @@ client.on(
 
         const ticketChannel =
           await guild.channels.create({
+
             name: channelName,
 
             type: ChannelType.GuildText,
@@ -817,9 +809,9 @@ client.on(
               `ticketOwner:${interaction.user.id} | type:${ticketType}`,
 
             permissionOverwrites: [
+
               {
-                id:
-                  guild.roles.everyone.id,
+                id: guild.roles.everyone.id,
 
                 deny: [
                   PermissionFlagsBits.ViewChannel,
@@ -827,8 +819,7 @@ client.on(
               },
 
               {
-                id:
-                  interaction.user.id,
+                id: interaction.user.id,
 
                 allow: [
                   PermissionFlagsBits.ViewChannel,
@@ -852,8 +843,7 @@ client.on(
               },
 
               {
-                id:
-                  client.user.id,
+                id: client.user.id,
 
                 allow: [
                   PermissionFlagsBits.ViewChannel,
@@ -904,9 +894,12 @@ client.on(
             });
 
         await ticketChannel.send({
+
           content:
             `<@${interaction.user.id}> <@&${staffRoleId}>`,
+
           embeds: [ticketEmbed],
+
           components: [buttonRow],
         });
 
@@ -993,7 +986,6 @@ client.on(
               "❌ Something went wrong. Check Railway logs.",
             ephemeral: true,
           });
-
         }
 
       } catch {}
@@ -1128,7 +1120,7 @@ client.on(
       }
 
       // ------------------------------------------
-      // REMOVE OLD ROLE
+      // REMOVE OLD ROLE FIRST
       // ------------------------------------------
 
       const removeRole =
@@ -1168,130 +1160,34 @@ client.on(
         );
       }
 
-      // ==========================================
-      // BANNER DIAGNOSTICS
-      // ==========================================
-
-      const assetsFolder =
-        path.join(
-          __dirname,
-          "assets"
-        );
-
-      const bannerPath =
-        path.join(
-          assetsFolder,
-          "banner.png"
-        );
-
-      const profilePath =
-        path.join(
-          assetsFolder,
-          "profile.png"
-        );
-
-      console.log(
-        "========================================"
-      );
-
-      console.log(
-        "========== WL BANNER DEBUG =========="
-      );
-
-      console.log(
-        "BOT FOLDER:",
-        __dirname
-      );
-
-      console.log(
-        "ASSETS FOLDER:",
-        assetsFolder
-      );
-
-      console.log(
-        "BANNER PATH:",
-        bannerPath
-      );
-
-      console.log(
-        "BANNER EXISTS:",
-        fs.existsSync(
-          bannerPath
-        )
-      );
-
-      console.log(
-        "PROFILE EXISTS:",
-        fs.existsSync(
-          profilePath
-        )
-      );
-
-      let imageBuffer = null;
-      let imageFilename = null;
-
       // ------------------------------------------
-      // LOAD BANNER INTO MEMORY
+      // FIND DM IMAGE
       // ------------------------------------------
+
+      let imagePath = null;
 
       if (
         fs.existsSync(
-          bannerPath
+          "./assets/banner.png"
         )
       ) {
 
-        imageBuffer =
-          fs.readFileSync(
-            bannerPath
-          );
-
-        imageFilename =
-          "banner.png";
-
-        console.log(
-          "BANNER SIZE:",
-          imageBuffer.length,
-          "bytes"
-        );
-
-        console.log(
-          "BANNER LOADED INTO MEMORY: YES"
-        );
+        imagePath =
+          "./assets/banner.png";
 
       } else if (
         fs.existsSync(
-          profilePath
+          "./assets/profile.png"
         )
       ) {
 
-        imageBuffer =
-          fs.readFileSync(
-            profilePath
-          );
-
-        imageFilename =
-          "profile.png";
-
-        console.log(
-          "PROFILE SIZE:",
-          imageBuffer.length,
-          "bytes"
-        );
-
-        console.log(
-          "USING PROFILE.PNG AS FALLBACK"
-        );
-
-      } else {
-
-        console.error(
-          "NO BANNER OR PROFILE IMAGE FOUND!"
-        );
+        imagePath =
+          "./assets/profile.png";
       }
 
-      // ==========================================
+      // ------------------------------------------
       // CREATE DM EMBED
-      // ==========================================
+      // ------------------------------------------
 
       const dmEmbed =
         new EmbedBuilder()
@@ -1311,86 +1207,44 @@ client.on(
 
       let dmAttachment = null;
 
-      // ------------------------------------------
-      // CREATE ATTACHMENT
-      // ------------------------------------------
+      if (imagePath) {
 
-      if (
-        imageBuffer &&
-        imageFilename
-      ) {
-
-        console.log(
-          "CREATING DISCORD ATTACHMENT:",
-          imageFilename
-        );
+        const filename =
+          imagePath
+            .split("/")
+            .pop();
 
         dmAttachment =
           new AttachmentBuilder(
-            imageBuffer,
+            imagePath,
             {
-              name:
-                imageFilename,
+              name: filename,
             }
           );
 
         dmEmbed.setImage(
-          `attachment://${imageFilename}`
-        );
-
-        console.log(
-          "EMBED IMAGE SET TO:",
-          `attachment://${imageFilename}`
-        );
-
-      } else {
-
-        console.log(
-          "NO IMAGE ATTACHMENT CREATED."
+          `attachment://${filename}`
         );
       }
 
-      // ==========================================
+      // ------------------------------------------
       // SEND DM
-      // ==========================================
+      // ------------------------------------------
 
       try {
-
-        console.log(
-          `ATTEMPTING DM TO: ${message.author.tag}`
-        );
 
         const dmChannel =
           await message.author.createDM();
 
-        console.log(
-          "DM CHANNEL CREATED:",
-          dmChannel.id
-        );
-
         const dmData = {
-          embeds: [
-            dmEmbed
-          ],
+          embeds: [dmEmbed],
         };
 
-        if (
-          dmAttachment
-        ) {
+        if (dmAttachment) {
 
           dmData.files = [
-            dmAttachment
+            dmAttachment,
           ];
-
-          console.log(
-            "BANNER ATTACHED TO DM: YES"
-          );
-
-        } else {
-
-          console.log(
-            "BANNER ATTACHED TO DM: NO"
-          );
         }
 
         await dmChannel.send(
@@ -1398,15 +1252,7 @@ client.on(
         );
 
         console.log(
-          `SUCCESS: DM + BANNER SENT TO ${message.author.tag}`
-        );
-
-        console.log(
-          "========== END WL BANNER DEBUG =========="
-        );
-
-        console.log(
-          "========================================"
+          `SUCCESS: DM sent to ${message.author.tag}`
         );
 
       } catch (dmError) {
@@ -1428,14 +1274,6 @@ client.on(
         console.error(
           "DM ERROR MESSAGE:",
           dmError.message
-        );
-
-        console.error(
-          "========== END WL BANNER DEBUG =========="
-        );
-
-        console.error(
-          "========================================"
         );
       }
 
