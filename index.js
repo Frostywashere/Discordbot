@@ -1,5 +1,7 @@
 require("dotenv").config();
+
 const fs = require("fs");
+const path = require("path");
 
 const {
   Client,
@@ -35,6 +37,10 @@ const removeRoleName =
 const ownerId =
   process.env.OWNER_ID || "";
 
+// ==================================================
+// SERVER IDS
+// ==================================================
+
 const staffRoleId =
   "1543512745922531389";
 
@@ -60,25 +66,29 @@ const ticketCategories = {
 };
 
 // ==================================================
-// CUSTOM EMOJI
+// CUSTOM TICKET EMOJI
 // ==================================================
 
-const ticketEmoji = {
-  id: "1545228451630415942",
-  name: "c5c3990dd5fc4872b34ac7e02bd290d2",
-};
+const ticketEmojiId =
+  "1545228451630415942";
+
+const ticketEmojiName =
+  "c5c3990dd5fc4872b34ac7e02bd290d2";
 
 // ==================================================
 // CHECK TOKEN
 // ==================================================
 
 if (!token) {
-  console.error("ERROR: DISCORD_TOKEN is missing.");
+  console.error(
+    "ERROR: DISCORD_TOKEN is missing from Railway variables."
+  );
+
   process.exit(1);
 }
 
 // ==================================================
-// CREATE BOT
+// CREATE CLIENT
 // ==================================================
 
 const client = new Client({
@@ -87,7 +97,10 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
   ],
-  partials: [Partials.Channel],
+
+  partials: [
+    Partials.Channel,
+  ],
 });
 
 // ==================================================
@@ -107,7 +120,9 @@ function isOwner(userId) {
 }
 
 function isTicketChannel(channel) {
-  if (!channel) return false;
+  if (!channel) {
+    return false;
+  }
 
   return (
     channel.type === ChannelType.GuildText &&
@@ -117,11 +132,14 @@ function isTicketChannel(channel) {
 }
 
 function getTicketOwnerId(channel) {
-  if (!channel || !channel.topic) return null;
+  if (!channel || !channel.topic) {
+    return null;
+  }
 
-  const match = channel.topic.match(
-    /ticketOwner:(\d+)/
-  );
+  const match =
+    channel.topic.match(
+      /ticketOwner:(\d+)/
+    );
 
   return match ? match[1] : null;
 }
@@ -131,10 +149,10 @@ function getTicketOwnerId(channel) {
 // ==================================================
 
 async function buildTranscript(channel) {
-  let messages = [];
-  let lastId = null;
-
   try {
+    let messages = [];
+    let lastId = null;
+
     while (true) {
       const options = {
         limit: 100,
@@ -147,25 +165,33 @@ async function buildTranscript(channel) {
       const batch =
         await channel.messages.fetch(options);
 
-      if (!batch.size) break;
+      if (!batch.size) {
+        break;
+      }
 
-      messages.push(...batch.values());
+      messages.push(
+        ...batch.values()
+      );
 
       lastId =
         batch.last().id;
 
-      if (batch.size < 100) break;
+      if (batch.size < 100) {
+        break;
+      }
 
-      if (messages.length >= 1000) break;
+      if (messages.length >= 1000) {
+        break;
+      }
     }
 
     messages.reverse();
 
     let transcript =
-      `Atlanta Heights RP Ticket Transcript\n`;
+      "Atlanta Heights RP Ticket Transcript\n";
 
     transcript +=
-      `========================================\n`;
+      "========================================\n";
 
     transcript +=
       `Channel: ${channel.name}\n`;
@@ -174,7 +200,7 @@ async function buildTranscript(channel) {
       `Created: ${new Date().toISOString()}\n`;
 
     transcript +=
-      `========================================\n\n`;
+      "========================================\n\n";
 
     for (const message of messages) {
       const timestamp =
@@ -186,13 +212,17 @@ async function buildTranscript(channel) {
           : "Unknown User";
 
       const content =
-        message.content || "[No text content]";
+        message.content ||
+        "[No text content]";
 
       transcript +=
         `[${timestamp}] ${username}: ${content}\n`;
 
       if (message.attachments.size) {
-        for (const attachment of message.attachments.values()) {
+        for (
+          const attachment of
+          message.attachments.values()
+        ) {
           transcript +=
             `Attachment: ${attachment.url}\n`;
         }
@@ -200,9 +230,11 @@ async function buildTranscript(channel) {
     }
 
     return transcript;
+
   } catch (error) {
+
     console.error(
-      "Transcript error:",
+      "Transcript build error:",
       error
     );
 
@@ -214,11 +246,12 @@ async function buildTranscript(channel) {
 }
 
 // ==================================================
-// SEND TRANSCRIPT
+// SAVE TRANSCRIPT
 // ==================================================
 
-async function sendTranscript(channel) {
+async function saveTranscript(channel) {
   try {
+
     const category =
       await channel.guild.channels.fetch(
         transcriptCategoryId
@@ -228,11 +261,12 @@ async function sendTranscript(channel) {
       !category ||
       category.type !== ChannelType.GuildCategory
     ) {
+
       console.error(
-        "Transcript category was not found."
+        "Transcript category not found."
       );
 
-      return;
+      return null;
     }
 
     const transcript =
@@ -241,39 +275,52 @@ async function sendTranscript(channel) {
     const ownerIdForTicket =
       getTicketOwnerId(channel);
 
+    const safeName =
+      channel.name
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-")
+        .slice(0, 70);
+
     const transcriptChannel =
       await channel.guild.channels.create({
         name:
-          `transcript-${channel.name}`
-            .toLowerCase()
-            .replace(/[^a-z0-9-]/g, "-")
-            .slice(0, 90),
+          `transcript-${safeName}`,
 
-        type: ChannelType.GuildText,
+        type:
+          ChannelType.GuildText,
 
-        parent: transcriptCategoryId,
+        parent:
+          transcriptCategoryId,
 
         permissionOverwrites: [
           {
-            id: channel.guild.roles.everyone.id,
+            id:
+              channel.guild.roles.everyone.id,
+
             deny: [
               PermissionFlagsBits.ViewChannel,
             ],
           },
 
           {
-            id: staffRoleId,
+            id:
+              staffRoleId,
+
             allow: [
               PermissionFlagsBits.ViewChannel,
               PermissionFlagsBits.SendMessages,
               PermissionFlagsBits.ReadMessageHistory,
+              PermissionFlagsBits.AttachFiles,
             ],
           },
         ],
       });
 
     const filePath =
-      `./transcript-${Date.now()}.txt`;
+      path.join(
+        __dirname,
+        `transcript-${Date.now()}.txt`
+      );
 
     fs.writeFileSync(
       filePath,
@@ -283,27 +330,31 @@ async function sendTranscript(channel) {
 
     await transcriptChannel.send({
       content:
-        `📄 **Ticket Transcript**\n` +
-        `Original ticket: **${channel.name}**\n` +
-        `Ticket owner: ${
+        `📄 **Ticket Transcript**\n\n` +
+        `Original Ticket: **${channel.name}**\n` +
+        `Ticket Owner: ${
           ownerIdForTicket
             ? `<@${ownerIdForTicket}>`
             : "Unknown"
         }`,
 
-      files: [filePath],
+      files: [
+        filePath,
+      ],
     });
 
     fs.unlinkSync(filePath);
 
     console.log(
-      `Transcript saved for ${channel.name}`
+      `Transcript saved: ${transcriptChannel.name}`
     );
 
     return transcriptChannel;
+
   } catch (error) {
+
     console.error(
-      "Failed to save transcript:",
+      "Transcript save error:",
       error
     );
 
@@ -316,8 +367,9 @@ async function sendTranscript(channel) {
 // ==================================================
 
 async function closeTicket(channel) {
+
   const transcriptChannel =
-    await sendTranscript(channel);
+    await saveTranscript(channel);
 
   if (!transcriptChannel) {
     console.error(
@@ -325,110 +377,132 @@ async function closeTicket(channel) {
     );
   }
 
-  setTimeout(async () => {
-    try {
-      await channel.delete(
-        "Ticket closed by staff."
-      );
-    } catch (error) {
-      console.error(
-        "Could not delete ticket:",
-        error
-      );
-    }
-  }, 2000);
+  setTimeout(
+    async () => {
+
+      try {
+
+        await channel.delete(
+          "Ticket closed by staff."
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Ticket deletion error:",
+          error
+        );
+      }
+
+    },
+    2000
+  );
 }
 
 // ==================================================
 // BOT READY
 // ==================================================
 
-client.once("ready", async () => {
-  console.log(
-    `Logged in as ${client.user.tag}`
-  );
-
-  console.log(
-    `Watching whitelist channel: ${channelId}`
-  );
-
-  console.log(
-    `Whitelist trigger: WL`
-  );
-
-  console.log(
-    `Allowlisted role: ${roleName}`
-  );
-
-  console.log(
-    `Staff role: ${staffRoleId}`
-  );
-
-  try {
-    const whitelistChannel =
-      await client.channels.fetch(
-        channelId
-      );
-
-    if (
-      !whitelistChannel ||
-      !whitelistChannel.guild
-    ) {
-      console.error(
-        "Could not find whitelist channel."
-      );
-
-      return;
-    }
-
-    const guild =
-      whitelistChannel.guild;
-
-    const clearCommand =
-      new SlashCommandBuilder()
-        .setName("clear")
-        .setDescription(
-          "Delete messages from this channel."
-        )
-        .setDefaultMemberPermissions(
-          PermissionFlagsBits.ManageMessages
-        );
-
-    const setupTicketsCommand =
-      new SlashCommandBuilder()
-        .setName("setup-tickets")
-        .setDescription(
-          "Send the Atlanta Heights RP ticket panel."
-        );
-
-    await guild.commands.set([
-      clearCommand,
-      setupTicketsCommand,
-    ]);
+client.once(
+  "clientReady",
+  async () => {
 
     console.log(
-      `Registered /clear and /setup-tickets in ${guild.name}`
+      `Logged in as ${client.user.tag}`
     );
-  } catch (error) {
-    console.error(
-      "Command registration error:",
-      error
+
+    console.log(
+      `Watching whitelist channel: ${channelId}`
     );
+
+    console.log(
+      "Whitelist trigger: WL"
+    );
+
+    console.log(
+      `Allowlisted role: ${roleName}`
+    );
+
+    console.log(
+      `Staff role: ${staffRoleId}`
+    );
+
+    try {
+
+      const whitelistChannel =
+        await client.channels.fetch(
+          channelId
+        );
+
+      if (
+        !whitelistChannel ||
+        !whitelistChannel.guild
+      ) {
+
+        console.error(
+          "Could not find whitelist channel."
+        );
+
+        return;
+      }
+
+      const guild =
+        whitelistChannel.guild;
+
+      // ------------------------------------------
+      // CLEAR COMMAND
+      // ------------------------------------------
+
+      const clearCommand =
+        new SlashCommandBuilder()
+          .setName("clear")
+          .setDescription(
+            "Delete messages from this channel."
+          );
+
+      // ------------------------------------------
+      // SETUP TICKETS COMMAND
+      // ------------------------------------------
+
+      const setupTicketsCommand =
+        new SlashCommandBuilder()
+          .setName("setup-tickets")
+          .setDescription(
+            "Send the Atlanta Heights RP ticket panel."
+          );
+
+      await guild.commands.set([
+        clearCommand,
+        setupTicketsCommand,
+      ]);
+
+      console.log(
+        `Registered /clear and /setup-tickets in ${guild.name}`
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Command registration error:",
+        error
+      );
+    }
   }
-});
+);
 
 // ==================================================
-// SLASH COMMANDS
+// INTERACTIONS
 // ==================================================
 
 client.on(
   "interactionCreate",
   async (interaction) => {
+
     try {
 
-      // ==========================================
+      // ==================================================
       // /CLEAR
-      // ==========================================
+      // ==================================================
 
       if (
         interaction.isChatInputCommand() &&
@@ -440,6 +514,7 @@ client.on(
             interaction.user.id
           )
         ) {
+
           await interaction.reply({
             content:
               "❌ You are not authorized to use this command.",
@@ -462,7 +537,9 @@ client.on(
               limit: 100,
             });
 
-          if (!messages.size) break;
+          if (!messages.size) {
+            break;
+          }
 
           const recent =
             messages.filter(
@@ -492,19 +569,23 @@ client.on(
                 14 * 24 * 60 * 60 * 1000
             );
 
-          if (oldMessages.size) {
+          for (
+            const oldMessage of
+            oldMessages.values()
+          ) {
 
-            for (
-              const message of oldMessages.values()
-            ) {
-              try {
-                await message.delete();
-                deleted++;
-              } catch {}
-            }
+            try {
+
+              await oldMessage.delete();
+
+              deleted++;
+
+            } catch {}
           }
 
-          if (messages.size < 100) {
+          if (
+            messages.size < 100
+          ) {
             break;
           }
         }
@@ -517,9 +598,9 @@ client.on(
         return;
       }
 
-      // ==========================================
+      // ==================================================
       // /SETUP-TICKETS
-      // ==========================================
+      // ==================================================
 
       if (
         interaction.isChatInputCommand() &&
@@ -532,6 +613,7 @@ client.on(
             interaction.user.id
           )
         ) {
+
           await interaction.reply({
             content:
               "❌ You are not authorized to use this command.",
@@ -545,6 +627,18 @@ client.on(
           ephemeral: true,
         });
 
+        console.log(
+          "========== TICKET PANEL DEBUG =========="
+        );
+
+        console.log(
+          `Ticket emoji ID: ${ticketEmojiId}`
+        );
+
+        console.log(
+          `Ticket emoji name: ${ticketEmojiName}`
+        );
+
         const panelChannel =
           await client.channels.fetch(
             ticketPanelChannelId
@@ -554,6 +648,7 @@ client.on(
           !panelChannel ||
           !panelChannel.isTextBased()
         ) {
+
           await interaction.editReply({
             content:
               "❌ I couldn't find the ticket panel channel.",
@@ -562,12 +657,25 @@ client.on(
           return;
         }
 
-        const imagePath =
+        // ------------------------------------------
+        // PANEL IMAGE
+        // ------------------------------------------
+
+        const panelImagePath =
+          path.join(
+            __dirname,
+            "assets",
+            "ticket-panel.png"
+          );
+
+        const panelImageExists =
           fs.existsSync(
-            "./assets/ticket-panel.png"
-          )
-            ? "./assets/ticket-panel.png"
-            : null;
+            panelImagePath
+          );
+
+        console.log(
+          `Ticket panel image exists: ${panelImageExists}`
+        );
 
         const panelEmbed =
           new EmbedBuilder()
@@ -587,11 +695,11 @@ client.on(
 
         let panelAttachment = null;
 
-        if (imagePath) {
+        if (panelImageExists) {
 
           panelAttachment =
             new AttachmentBuilder(
-              imagePath,
+              panelImagePath,
               {
                 name:
                   "ticket-panel.png",
@@ -603,6 +711,10 @@ client.on(
           );
         }
 
+        // ------------------------------------------
+        // TICKET MENU
+        // ------------------------------------------
+
         const menu =
           new StringSelectMenuBuilder()
             .setCustomId(
@@ -612,70 +724,143 @@ client.on(
               "Select a ticket type..."
             );
 
-        const options = [
-          "General Support",
-          "Player Report",
-          "Donation Ticket",
-          "Female Verification",
-          "Staff Reports",
-          "Ban Appeals",
-          "Contact a Developer",
-          "Gang Support",
+        const ticketOptions = [
+          {
+            label:
+              "General Support",
+
+            value:
+              "general_support",
+          },
+
+          {
+            label:
+              "Player Report",
+
+            value:
+              "player_report",
+          },
+
+          {
+            label:
+              "Donation Ticket",
+
+            value:
+              "donation_ticket",
+          },
+
+          {
+            label:
+              "Female Verification",
+
+            value:
+              "female_verification",
+          },
+
+          {
+            label:
+              "Staff Reports",
+
+            value:
+              "staff_reports",
+          },
+
+          {
+            label:
+              "Ban Appeals",
+
+            value:
+              "ban_appeals",
+          },
+
+          {
+            label:
+              "Contact a Developer",
+
+            value:
+              "contact_a_developer",
+          },
+
+          {
+            label:
+              "Gang Support",
+
+            value:
+              "gang_support",
+          },
         ];
 
-        for (const option of options) {
+        for (
+          const option of ticketOptions
+        ) {
+
+          const menuOption =
+            new StringSelectMenuOptionBuilder()
+              .setLabel(
+                option.label
+              )
+              .setValue(
+                option.value
+              )
+              .setEmoji({
+                id:
+                  ticketEmojiId,
+
+                name:
+                  ticketEmojiName,
+              });
 
           menu.addOptions(
-            new StringSelectMenuOptionBuilder()
-              .setLabel(option)
-              .setValue(
-                option
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]+/g, "_")
-              )
-
-              // CUSTOM ATLANTA HEIGHTS EMOJI
-              .setEmoji({
-                id: ticketEmoji.id,
-                name: null
-              })
+            menuOption
           );
         }
 
-        const row =
+        const menuRow =
           new ActionRowBuilder()
-            .addComponents(menu);
+            .addComponents(
+              menu
+            );
 
-        const sendData = {
-          embeds: [panelEmbed],
-          components: [row],
+        const panelData = {
+          embeds: [
+            panelEmbed,
+          ],
+
+          components: [
+            menuRow,
+          ],
         };
 
         if (panelAttachment) {
-          sendData.files = [
+
+          panelData.files = [
             panelAttachment,
           ];
         }
 
         await panelChannel.send(
-          sendData
+          panelData
+        );
+
+        console.log(
+          "SUCCESS: Ticket panel sent."
+        );
+
+        console.log(
+          "========== END TICKET PANEL DEBUG =========="
         );
 
         await interaction.editReply({
           content:
-            "✅ Ticket panel sent successfully.",
+            "✅ Ticket panel sent successfully!",
         });
-
-        console.log(
-          "Ticket panel sent."
-        );
 
         return;
       }
 
-      // ==========================================
+      // ==================================================
       // TICKET DROPDOWN
-      // ==========================================
+      // ==================================================
 
       if (
         interaction.isStringSelectMenu() &&
@@ -728,7 +913,9 @@ client.on(
         }
 
         const categoryId =
-          ticketCategories[ticketType];
+          ticketCategories[
+            ticketType
+          ];
 
         if (!categoryId) {
 
@@ -748,26 +935,9 @@ client.on(
         const guild =
           interaction.guild;
 
-        const category =
-          await guild.channels.fetch(
-            categoryId
-          );
-
-        if (
-          !category ||
-          category.type !==
-            ChannelType.GuildCategory
-        ) {
-
-          await interaction.editReply({
-            content:
-              "❌ The ticket category could not be found.",
-          });
-
-          return;
-        }
-
-        // Prevent duplicate open tickets
+        // ------------------------------------------
+        // CHECK FOR EXISTING TICKET
+        // ------------------------------------------
 
         const existingTicket =
           guild.channels.cache.find(
@@ -787,23 +957,30 @@ client.on(
           return;
         }
 
+        // ------------------------------------------
+        // CREATE TICKET
+        // ------------------------------------------
+
         const safeUsername =
           interaction.user.username
             .toLowerCase()
-            .replace(/[^a-z0-9]/g, "-")
+            .replace(
+              /[^a-z0-9]/g,
+              "-"
+            )
             .slice(0, 20);
-
-        const channelName =
-          `${safeUsername}-ticket`;
 
         const ticketChannel =
           await guild.channels.create({
 
-            name: channelName,
+            name:
+              `${safeUsername}-ticket`,
 
-            type: ChannelType.GuildText,
+            type:
+              ChannelType.GuildText,
 
-            parent: categoryId,
+            parent:
+              categoryId,
 
             topic:
               `ticketOwner:${interaction.user.id} | type:${ticketType}`,
@@ -811,7 +988,8 @@ client.on(
             permissionOverwrites: [
 
               {
-                id: guild.roles.everyone.id,
+                id:
+                  guild.roles.everyone.id,
 
                 deny: [
                   PermissionFlagsBits.ViewChannel,
@@ -819,7 +997,8 @@ client.on(
               },
 
               {
-                id: interaction.user.id,
+                id:
+                  interaction.user.id,
 
                 allow: [
                   PermissionFlagsBits.ViewChannel,
@@ -831,7 +1010,8 @@ client.on(
               },
 
               {
-                id: staffRoleId,
+                id:
+                  staffRoleId,
 
                 allow: [
                   PermissionFlagsBits.ViewChannel,
@@ -843,7 +1023,8 @@ client.on(
               },
 
               {
-                id: client.user.id,
+                id:
+                  client.user.id,
 
                 allow: [
                   PermissionFlagsBits.ViewChannel,
@@ -856,6 +1037,10 @@ client.on(
               },
             ],
           });
+
+        // ------------------------------------------
+        // CLOSE BUTTON
+        // ------------------------------------------
 
         const closeButton =
           new ButtonBuilder()
@@ -876,16 +1061,23 @@ client.on(
               closeButton
             );
 
+        // ------------------------------------------
+        // TICKET EMBED
+        // ------------------------------------------
+
         const ticketEmbed =
           new EmbedBuilder()
             .setColor(0x0066ff)
             .setTitle(
-              `${ticketType}`
+              ticketType
             )
             .setDescription(
               `Hello <@${interaction.user.id}>!\n\n` +
+
               `Thank you for opening a **${ticketType}** ticket.\n\n` +
+
               `A member of the <@&${staffRoleId}> team will assist you shortly.\n\n` +
+
               `Please explain your issue and provide any information that may help staff.`
             )
             .setFooter({
@@ -898,9 +1090,13 @@ client.on(
           content:
             `<@${interaction.user.id}> <@&${staffRoleId}>`,
 
-          embeds: [ticketEmbed],
+          embeds: [
+            ticketEmbed,
+          ],
 
-          components: [buttonRow],
+          components: [
+            buttonRow,
+          ],
         });
 
         await interaction.editReply({
@@ -911,9 +1107,9 @@ client.on(
         return;
       }
 
-      // ==========================================
+      // ==================================================
       // CLOSE BUTTON
-      // ==========================================
+      // ==================================================
 
       if (
         interaction.isButton() &&
@@ -953,7 +1149,7 @@ client.on(
 
         await interaction.reply({
           content:
-            "🔒 Closing ticket and saving transcript...",
+            "🔒 Saving transcript and closing ticket...",
         });
 
         await closeTicket(
@@ -972,14 +1168,18 @@ client.on(
 
       try {
 
-        if (interaction.deferred) {
+        if (
+          interaction.deferred
+        ) {
 
           await interaction.editReply({
             content:
               "❌ Something went wrong. Check Railway logs.",
           });
 
-        } else if (!interaction.replied) {
+        } else if (
+          !interaction.replied
+        ) {
 
           await interaction.reply({
             content:
@@ -994,32 +1194,45 @@ client.on(
 );
 
 // ==================================================
-// MESSAGE COMMANDS
+// MESSAGE CREATE
 // ==================================================
 
 client.on(
   "messageCreate",
   async (message) => {
 
-    if (message.author.bot) return;
+    if (message.author.bot) {
+      return;
+    }
 
-    if (!message.guild) return;
+    if (!message.guild) {
+      return;
+    }
 
-    // ==========================================
+    // ==================================================
     // $CLOSE
-    // ==========================================
+    // ==================================================
 
     if (
       message.content
         .trim()
-        .toLowerCase() === "$close"
+        .toLowerCase() ===
+      "$close"
     ) {
 
-      if (!isStaff(message.member)) {
+      if (
+        !isStaff(
+          message.member
+        )
+      ) {
         return;
       }
 
-      if (!isTicketChannel(message.channel)) {
+      if (
+        !isTicketChannel(
+          message.channel
+        )
+      ) {
         return;
       }
 
@@ -1044,21 +1257,30 @@ client.on(
       return;
     }
 
-    // ==========================================
+    // ==================================================
     // $DELETE
-    // ==========================================
+    // ==================================================
 
     if (
       message.content
         .trim()
-        .toLowerCase() === "$delete"
+        .toLowerCase() ===
+      "$delete"
     ) {
 
-      if (!isStaff(message.member)) {
+      if (
+        !isStaff(
+          message.member
+        )
+      ) {
         return;
       }
 
-      if (!isTicketChannel(message.channel)) {
+      if (
+        !isTicketChannel(
+          message.channel
+        )
+      ) {
         return;
       }
 
@@ -1079,12 +1301,13 @@ client.on(
       return;
     }
 
-    // ==========================================
+    // ==================================================
     // WL
-    // ==========================================
+    // ==================================================
 
     if (
-      message.channelId !== channelId
+      message.channelId !==
+      channelId
     ) {
       return;
     }
@@ -1092,7 +1315,8 @@ client.on(
     if (
       message.content
         .trim()
-        .toLowerCase() !== "wl"
+        .toLowerCase() !==
+      "wl"
     ) {
       return;
     }
@@ -1120,7 +1344,7 @@ client.on(
       }
 
       // ------------------------------------------
-      // REMOVE OLD ROLE FIRST
+      // REMOVE OLD ROLE
       // ------------------------------------------
 
       const removeRole =
@@ -1160,34 +1384,139 @@ client.on(
         );
       }
 
-      // ------------------------------------------
-      // FIND DM IMAGE
-      // ------------------------------------------
+      // ==================================================
+      // BANNER DEBUG
+      // ==================================================
 
-      let imagePath = null;
+      console.log(
+        "=========================================="
+      );
 
-      if (
+      console.log(
+        "========== WL BANNER DEBUG =========="
+      );
+
+      const assetsFolder =
+        path.join(
+          __dirname,
+          "assets"
+        );
+
+      const bannerPath =
+        path.join(
+          assetsFolder,
+          "banner.png"
+        );
+
+      const profilePath =
+        path.join(
+          assetsFolder,
+          "profile.png"
+        );
+
+      console.log(
+        `BOT FOLDER: ${__dirname}`
+      );
+
+      console.log(
+        `ASSETS FOLDER: ${assetsFolder}`
+      );
+
+      console.log(
+        `BANNER PATH: ${bannerPath}`
+      );
+
+      const bannerExists =
         fs.existsSync(
-          "./assets/banner.png"
-        )
-      ) {
+          bannerPath
+        );
 
-        imagePath =
-          "./assets/banner.png";
-
-      } else if (
+      const profileExists =
         fs.existsSync(
-          "./assets/profile.png"
-        )
-      ) {
+          profilePath
+        );
 
-        imagePath =
-          "./assets/profile.png";
+      console.log(
+        `BANNER EXISTS: ${bannerExists}`
+      );
+
+      console.log(
+        `PROFILE EXISTS: ${profileExists}`
+      );
+
+      let imageBuffer = null;
+      let imageFilename = null;
+
+      // ------------------------------------------
+      // LOAD BANNER
+      // ------------------------------------------
+
+      if (bannerExists) {
+
+        const bannerStats =
+          fs.statSync(
+            bannerPath
+          );
+
+        console.log(
+          `BANNER SIZE: ${bannerStats.size} bytes`
+        );
+
+        if (
+          bannerStats.size > 100
+        ) {
+
+          imageBuffer =
+            fs.readFileSync(
+              bannerPath
+            );
+
+          imageFilename =
+            "banner.png";
+
+          console.log(
+            "BANNER LOADED INTO MEMORY: YES"
+          );
+
+        } else {
+
+          console.error(
+            "BANNER FILE IS TOO SMALL / INVALID."
+          );
+        }
+
+      } else if (profileExists) {
+
+        const profileStats =
+          fs.statSync(
+            profilePath
+          );
+
+        console.log(
+          `PROFILE SIZE: ${profileStats.size} bytes`
+        );
+
+        if (
+          profileStats.size > 100
+        ) {
+
+          imageBuffer =
+            fs.readFileSync(
+              profilePath
+            );
+
+          imageFilename =
+            "profile.png";
+
+          console.log(
+            "USING PROFILE.PNG AS FALLBACK"
+          );
+        }
       }
 
-      // ------------------------------------------
+      // ==================================================
       // CREATE DM EMBED
-      // ------------------------------------------
+      // ==================================================
 
       const dmEmbed =
         new EmbedBuilder()
@@ -1197,7 +1526,9 @@ client.on(
           )
           .setDescription(
             "Welcome to The Atlanta Heights. To ensure you love the city please go to see the news on what's happening or go check out the Tebex!\n\n" +
+
             "**Or you can go ahead and fly right in the city!**\n\n" +
+
             "If you are found cheating or abusing anything **YOU WILL BE BANNED**"
           )
           .setFooter({
@@ -1207,37 +1538,64 @@ client.on(
 
       let dmAttachment = null;
 
-      if (imagePath) {
+      // ------------------------------------------
+      // ADD BANNER TO EMBED
+      // ------------------------------------------
 
-        const filename =
-          imagePath
-            .split("/")
-            .pop();
+      if (
+        imageBuffer &&
+        imageFilename
+      ) {
+
+        console.log(
+          `CREATING DISCORD ATTACHMENT: ${imageFilename}`
+        );
 
         dmAttachment =
           new AttachmentBuilder(
-            imagePath,
+            imageBuffer,
             {
-              name: filename,
+              name:
+                imageFilename,
             }
           );
 
         dmEmbed.setImage(
-          `attachment://${filename}`
+          `attachment://${imageFilename}`
+        );
+
+        console.log(
+          `EMBED IMAGE SET TO: attachment://${imageFilename}`
+        );
+
+      } else {
+
+        console.log(
+          "NO VALID IMAGE FOUND."
         );
       }
 
-      // ------------------------------------------
+      // ==================================================
       // SEND DM
-      // ------------------------------------------
+      // ==================================================
 
       try {
+
+        console.log(
+          `ATTEMPTING DM TO: ${message.author.tag}`
+        );
 
         const dmChannel =
           await message.author.createDM();
 
+        console.log(
+          `DM CHANNEL CREATED: ${dmChannel.id}`
+        );
+
         const dmData = {
-          embeds: [dmEmbed],
+          embeds: [
+            dmEmbed,
+          ],
         };
 
         if (dmAttachment) {
@@ -1245,6 +1603,16 @@ client.on(
           dmData.files = [
             dmAttachment,
           ];
+
+          console.log(
+            "BANNER ATTACHED TO DM: YES"
+          );
+
+        } else {
+
+          console.log(
+            "BANNER ATTACHED TO DM: NO"
+          );
         }
 
         await dmChannel.send(
@@ -1252,7 +1620,7 @@ client.on(
         );
 
         console.log(
-          `SUCCESS: DM sent to ${message.author.tag}`
+          `SUCCESS: DM + BANNER SENT TO ${message.author.tag}`
         );
 
       } catch (dmError) {
@@ -1277,13 +1645,20 @@ client.on(
         );
       }
 
-      // ------------------------------------------
-      // NO PUBLIC RESPONSE
-      // ------------------------------------------
+      console.log(
+        "========== END WL BANNER DEBUG =========="
+      );
+
+      console.log(
+        "=========================================="
+      );
 
       console.log(
         `${message.author.tag} was successfully allowlisted.`
       );
+
+      // NO PUBLIC RESPONSE
+      return;
 
     } catch (error) {
 
