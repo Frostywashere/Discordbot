@@ -283,6 +283,7 @@ async function saveTranscript(channel) {
 
     const transcriptChannel =
       await channel.guild.channels.create({
+
         name:
           `transcript-${safeName}`,
 
@@ -449,9 +450,9 @@ client.once(
       const guild =
         whitelistChannel.guild;
 
-      // ------------------------------------------
+      // ==================================================
       // CLEAR COMMAND
-      // ------------------------------------------
+      // ==================================================
 
       const clearCommand =
         new SlashCommandBuilder()
@@ -460,9 +461,9 @@ client.once(
             "Delete messages from this channel."
           );
 
-      // ------------------------------------------
+      // ==================================================
       // SETUP TICKETS COMMAND
-      // ------------------------------------------
+      // ==================================================
 
       const setupTicketsCommand =
         new SlashCommandBuilder()
@@ -657,9 +658,9 @@ client.on(
           return;
         }
 
-        // ------------------------------------------
+        // ==================================================
         // PANEL IMAGE
-        // ------------------------------------------
+        // ==================================================
 
         const panelImagePath =
           path.join(
@@ -677,17 +678,26 @@ client.on(
           `Ticket panel image exists: ${panelImageExists}`
         );
 
+        // ==================================================
+        // PANEL EMBED
+        // ==================================================
+
         const panelEmbed =
           new EmbedBuilder()
             .setColor(0x0066ff)
+
             .setTitle(
-              "Atlanta Heights RP | Support"
+              `<:c5c3990dd5fc4872b34ac7e02bd290d2:1545228451630415942> Atlanta Heights Support Tickets`
             )
+
             .setDescription(
-              "Welcome to **Atlanta Heights RP** support!\n\n" +
-              "Please select the option below that best matches what you need help with.\n\n" +
-              "A private ticket will be created under the correct category."
+              "Welcome to The Atlanta Heights Support. To ensure your issue is handled as quickly as possible, please select the most relevant category below.\n\n" +
+
+              "Our staff team will respond as soon as possible — please be patient and provide clear, detailed information so we can assist you efficiently.\n\n" +
+
+              "*If you are found spamming tickets/abusing our ticket system — You will be banned.*"
             )
+
             .setFooter({
               text:
                 "Atlanta Heights RP • Support",
@@ -711,9 +721,9 @@ client.on(
           );
         }
 
-        // ------------------------------------------
+        // ==================================================
         // TICKET MENU
-        // ------------------------------------------
+        // ==================================================
 
         const menu =
           new StringSelectMenuBuilder()
@@ -790,18 +800,25 @@ client.on(
           },
         ];
 
+        // ==================================================
+        // ADD OPTIONS
+        // ==================================================
+
         for (
           const option of ticketOptions
         ) {
 
           const menuOption =
             new StringSelectMenuOptionBuilder()
+
               .setLabel(
                 option.label
               )
+
               .setValue(
                 option.value
               )
+
               .setEmoji({
                 id:
                   ticketEmojiId,
@@ -935,9 +952,9 @@ client.on(
         const guild =
           interaction.guild;
 
-        // ------------------------------------------
-        // CHECK FOR EXISTING TICKET
-        // ------------------------------------------
+        // ==================================================
+        // CHECK EXISTING TICKET
+        // ==================================================
 
         const existingTicket =
           guild.channels.cache.find(
@@ -957,9 +974,9 @@ client.on(
           return;
         }
 
-        // ------------------------------------------
+        // ==================================================
         // CREATE TICKET
-        // ------------------------------------------
+        // ==================================================
 
         const safeUsername =
           interaction.user.username
@@ -1038,9 +1055,9 @@ client.on(
             ],
           });
 
-        // ------------------------------------------
+        // ==================================================
         // CLOSE BUTTON
-        // ------------------------------------------
+        // ==================================================
 
         const closeButton =
           new ButtonBuilder()
@@ -1061,16 +1078,18 @@ client.on(
               closeButton
             );
 
-        // ------------------------------------------
+        // ==================================================
         // TICKET EMBED
-        // ------------------------------------------
+        // ==================================================
 
         const ticketEmbed =
           new EmbedBuilder()
             .setColor(0x0066ff)
+
             .setTitle(
               ticketType
             )
+
             .setDescription(
               `Hello <@${interaction.user.id}>!\n\n` +
 
@@ -1080,6 +1099,7 @@ client.on(
 
               `Please explain your issue and provide any information that may help staff.`
             )
+
             .setFooter({
               text:
                 "Atlanta Heights RP Support",
@@ -1323,9 +1343,9 @@ client.on(
 
     try {
 
-      // ------------------------------------------
+      // ==================================================
       // FIND ALLOWLISTED ROLE
-      // ------------------------------------------
+      // ==================================================
 
       const role =
         message.guild.roles.cache.find(
@@ -1343,9 +1363,9 @@ client.on(
         return;
       }
 
-      // ------------------------------------------
+      // ==================================================
       // REMOVE OLD ROLE
-      // ------------------------------------------
+      // ==================================================
 
       const removeRole =
         message.guild.roles.cache.find(
@@ -1368,9 +1388,9 @@ client.on(
         );
       }
 
-      // ------------------------------------------
+      // ==================================================
       // GIVE ALLOWLISTED ROLE
-      // ------------------------------------------
+      // ==================================================
 
       if (
         !message.member.roles.cache.has(
@@ -1447,9 +1467,9 @@ client.on(
       let imageBuffer = null;
       let imageFilename = null;
 
-      // ------------------------------------------
+      // ==================================================
       // LOAD BANNER
-      // ------------------------------------------
+      // ==================================================
 
       if (bannerExists) {
 
@@ -1521,9 +1541,11 @@ client.on(
       const dmEmbed =
         new EmbedBuilder()
           .setColor(0x0066ff)
+
           .setTitle(
             "You are now Allowlisted!"
           )
+
           .setDescription(
             "Welcome to The Atlanta Heights. To ensure you love the city please go to see the news on what's happening or go check out the Tebex!\n\n" +
 
@@ -1531,6 +1553,7 @@ client.on(
 
             "If you are found cheating or abusing anything **YOU WILL BE BANNED**"
           )
+
           .setFooter({
             text:
               "Atlanta Heights RP",
@@ -1538,9 +1561,9 @@ client.on(
 
       let dmAttachment = null;
 
-      // ------------------------------------------
-      // ADD BANNER TO EMBED
-      // ------------------------------------------
+      // ==================================================
+      // ADD BANNER
+      // ==================================================
 
       if (
         imageBuffer &&
