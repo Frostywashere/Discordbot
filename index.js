@@ -316,10 +316,6 @@ async function saveTranscript(channel) {
     const ownerIdForTicket =
       getTicketOwnerId(channel);
 
-    // ==================================================
-    // TEMP TRANSCRIPT FILE
-    // ==================================================
-
     const filePath =
       path.join(
         __dirname,
@@ -331,10 +327,6 @@ async function saveTranscript(channel) {
       transcript,
       "utf8"
     );
-
-    // ==================================================
-    // SEND TRANSCRIPT
-    // ==================================================
 
     await transcriptChannel.send({
 
@@ -359,10 +351,6 @@ async function saveTranscript(channel) {
         ),
       ],
     });
-
-    // ==================================================
-    // DELETE TEMP FILE
-    // ==================================================
 
     fs.unlinkSync(filePath);
 
@@ -497,13 +485,37 @@ client.once(
             "Send the Atlanta Heights RP ticket panel."
           );
 
+      // ==================================================
+      // /REMIND
+      // ==================================================
+
+      const remindCommand =
+        new SlashCommandBuilder()
+          .setName("remind")
+          .setDescription(
+            "Send a reminder to a ticket user."
+          )
+          .addUserOption(option =>
+            option
+              .setName("username")
+              .setDescription(
+                "The user to remind."
+              )
+              .setRequired(true)
+          );
+
+      // ==================================================
+      // REGISTER COMMANDS
+      // ==================================================
+
       await guild.commands.set([
         clearCommand,
         setupTicketsCommand,
+        remindCommand,
       ]);
 
       console.log(
-        `Registered /clear and /setup-tickets in ${guild.name}`
+        `Registered /clear, /setup-tickets and /remind in ${guild.name}`
       );
 
     } catch (error) {
@@ -677,10 +689,6 @@ client.on(
           return;
         }
 
-        // ==================================================
-        // PANEL IMAGE
-        // ==================================================
-
         const panelImagePath =
           path.join(
             __dirname,
@@ -692,10 +700,6 @@ client.on(
           fs.existsSync(
             panelImagePath
           );
-
-        // ==================================================
-        // PANEL EMBED
-        // ==================================================
 
         const panelEmbed =
           new EmbedBuilder()
@@ -738,10 +742,6 @@ client.on(
             "attachment://ticket-panel.png"
           );
         }
-
-        // ==================================================
-        // DROPDOWN
-        // ==================================================
 
         const menu =
           new StringSelectMenuBuilder()
@@ -886,6 +886,248 @@ client.on(
           content:
             "✅ Ticket panel sent successfully!",
         });
+
+        return;
+      }
+
+      // ==================================================
+      // /REMIND
+      // ==================================================
+
+      if (
+        interaction.isChatInputCommand() &&
+        interaction.commandName === "remind"
+      ) {
+
+        // ONLY WORKS IN TICKET CHANNELS
+        if (
+          !isTicketChannel(
+            interaction.channel
+          )
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ The `/remind` command can only be used inside a ticket channel.",
+            ephemeral: true,
+          });
+
+          return;
+        }
+
+        // STAFF ONLY
+        if (
+          !isStaff(
+            interaction.member
+          )
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ Only Staff Team members can use `/remind`.",
+            ephemeral: true,
+          });
+
+          return;
+        }
+
+        // GET USER
+        const user =
+          interaction.options.getUser(
+            "username"
+          );
+
+        if (!user) {
+
+          await interaction.reply({
+            content:
+              "❌ Please select a user to remind.",
+            ephemeral: true,
+          });
+
+          return;
+        }
+
+        await interaction.deferReply({
+          ephemeral: true,
+        });
+
+        try {
+
+          // ==================================================
+          // TICKET URL
+          // ==================================================
+
+          const ticketUrl =
+            interaction.channel.url;
+
+          // ==================================================
+          // BANNER
+          // ==================================================
+
+          const bannerPath =
+            path.join(
+              __dirname,
+              "assets",
+              "banner.png"
+            );
+
+          const bannerExists =
+            fs.existsSync(
+              bannerPath
+            );
+
+          // ==================================================
+          // REMINDER EMBED
+          // ==================================================
+
+          const reminderEmbed =
+            new EmbedBuilder()
+
+              .setColor(
+                0x0066ff
+              )
+
+              .setTitle(
+                "Ticket Reminder"
+              )
+
+              .setDescription(
+                `Hey <@${user.id}>, you have been reminded about your ticket.\n\n` +
+
+                `**Ticket Information**\n` +
+
+                `Please click the button to hop into your ticket.`
+              );
+
+          // ==================================================
+          // BANNER ATTACHMENT
+          // ==================================================
+
+          let bannerAttachment = null;
+
+          if (bannerExists) {
+
+            bannerAttachment =
+              new AttachmentBuilder(
+                bannerPath,
+                {
+                  name:
+                    "banner.png",
+                }
+              );
+
+            reminderEmbed.setImage(
+              "attachment://banner.png"
+            );
+
+          } else {
+
+            console.error(
+              "WARNING: assets/banner.png was not found."
+            );
+          }
+
+          // ==================================================
+          // HOP INTO TICKET BUTTON
+          // ==================================================
+
+          const ticketButton =
+            new ButtonBuilder()
+
+              .setLabel(
+                "Hop Into Ticket"
+              )
+
+              .setStyle(
+                ButtonStyle.Link
+              )
+
+              .setURL(
+                ticketUrl
+              );
+
+          const buttonRow =
+            new ActionRowBuilder()
+              .addComponents(
+                ticketButton
+              );
+
+          // ==================================================
+          // DM DATA
+          // ==================================================
+
+          const dmData = {
+
+            content:
+              `<@${user.id}>`,
+
+            embeds: [
+              reminderEmbed,
+            ],
+
+            components: [
+              buttonRow,
+            ],
+          };
+
+          // ==================================================
+          // ADD BANNER
+          // ==================================================
+
+          if (
+            bannerAttachment
+          ) {
+
+            dmData.files = [
+              bannerAttachment,
+            ];
+          }
+
+          // ==================================================
+          // SEND DM ONLY
+          // ==================================================
+
+          await user.send(
+            dmData
+          );
+
+          // ==================================================
+          // CONFIRM TO STAFF
+          // ==================================================
+
+          await interaction.editReply({
+
+            content:
+              `✅ Ticket reminder sent to **${user.tag}** in their DMs.`,
+          });
+
+        } catch (error) {
+
+          console.error(
+            "/remind error:",
+            error
+          );
+
+          if (
+            error.code === 50007
+          ) {
+
+            await interaction.editReply({
+
+              content:
+                "❌ I couldn't DM that user. Their DMs may be closed.",
+            });
+
+          } else {
+
+            await interaction.editReply({
+
+              content:
+                "❌ I couldn't send the ticket reminder. Check the Railway logs.",
+            });
+          }
+        }
 
         return;
       }
@@ -1088,7 +1330,7 @@ client.on(
           });
 
         // ==================================================
-        // TICKET CLOSE BUTTON
+        // CLOSE BUTTON
         // ==================================================
 
         const closeButton =
@@ -1188,7 +1430,7 @@ client.on(
         }
 
         // ==================================================
-        // TICKET MESSAGE DATA
+        // TICKET MESSAGE
         // ==================================================
 
         const ticketMessageData = {
@@ -1205,10 +1447,6 @@ client.on(
           ],
         };
 
-        // ==================================================
-        // ATTACH BANNER
-        // ==================================================
-
         if (
           ticketBannerAttachment
         ) {
@@ -1218,17 +1456,9 @@ client.on(
           ];
         }
 
-        // ==================================================
-        // SEND TICKET MESSAGE
-        // ==================================================
-
         await ticketChannel.send(
           ticketMessageData
         );
-
-        // ==================================================
-        // CONFIRM TO USER
-        // ==================================================
 
         await interaction.editReply({
 
@@ -1258,7 +1488,6 @@ client.on(
           await interaction.reply({
             content:
               "❌ Only Staff Team members can close tickets.",
-
             ephemeral: true,
           });
 
@@ -1274,7 +1503,6 @@ client.on(
           await interaction.reply({
             content:
               "❌ This is not a ticket channel.",
-
             ephemeral: true,
           });
 
@@ -1319,7 +1547,6 @@ client.on(
           await interaction.reply({
             content:
               "❌ Something went wrong. Check Railway logs.",
-
             ephemeral: true,
           });
         }
@@ -1658,7 +1885,7 @@ client.on(
       }
 
       // ==================================================
-      // SEND DM
+      // SEND WL DM
       // ==================================================
 
       try {
