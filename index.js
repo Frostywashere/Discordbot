@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const fs = require("fs");
 const path = require("path");
 
@@ -71,32 +70,11 @@ const ticketEmoji = {
 };
 
 // ==================================================
-// ASSET PATHS
-// ==================================================
-
-const assetsFolder = path.join(__dirname, "assets");
-
-const bannerPath = path.join(
-  assetsFolder,
-  "banner.png"
-);
-
-const profilePath = path.join(
-  assetsFolder,
-  "profile.png"
-);
-
-const ticketPanelPath = path.join(
-  assetsFolder,
-  "ticket-panel.png"
-);
-
-// ==================================================
 // CHECK TOKEN
 // ==================================================
 
 if (!token) {
-  console.error("❌ DISCORD_TOKEN is missing.");
+  console.error("ERROR: DISCORD_TOKEN is missing.");
   process.exit(1);
 }
 
@@ -110,10 +88,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
   ],
-
-  partials: [
-    Partials.Channel,
-  ],
+  partials: [Partials.Channel],
 });
 
 // ==================================================
@@ -143,9 +118,7 @@ function isTicketChannel(channel) {
 }
 
 function getTicketOwnerId(channel) {
-  if (!channel || !channel.topic) {
-    return null;
-  }
+  if (!channel || !channel.topic) return null;
 
   const match = channel.topic.match(
     /ticketOwner:(\d+)/
@@ -175,30 +148,25 @@ async function buildTranscript(channel) {
       const batch =
         await channel.messages.fetch(options);
 
-      if (!batch.size) {
-        break;
-      }
+      if (!batch.size) break;
 
       messages.push(...batch.values());
 
-      lastId = batch.last().id;
+      lastId =
+        batch.last().id;
 
-      if (batch.size < 100) {
-        break;
-      }
+      if (batch.size < 100) break;
 
-      if (messages.length >= 1000) {
-        break;
-      }
+      if (messages.length >= 1000) break;
     }
 
     messages.reverse();
 
     let transcript =
-      "Atlanta Heights RP Ticket Transcript\n";
+      `Atlanta Heights RP Ticket Transcript\n`;
 
     transcript +=
-      "========================================\n";
+      `========================================\n`;
 
     transcript +=
       `Channel: ${channel.name}\n`;
@@ -207,7 +175,7 @@ async function buildTranscript(channel) {
       `Created: ${new Date().toISOString()}\n`;
 
     transcript +=
-      "========================================\n\n";
+      `========================================\n\n`;
 
     for (const message of messages) {
       const timestamp =
@@ -219,16 +187,14 @@ async function buildTranscript(channel) {
           : "Unknown User";
 
       const content =
-        message.content ||
-        "[No text content]";
+        message.content || "[No text content]";
 
       transcript +=
         `[${timestamp}] ${username}: ${content}\n`;
 
       if (message.attachments.size) {
         for (
-          const attachment
-          of message.attachments.values()
+          const attachment of message.attachments.values()
         ) {
           transcript +=
             `Attachment: ${attachment.url}\n`;
@@ -240,7 +206,7 @@ async function buildTranscript(channel) {
 
   } catch (error) {
     console.error(
-      "❌ Transcript error:",
+      "Transcript error:",
       error
     );
 
@@ -264,20 +230,19 @@ async function sendTranscript(channel) {
 
     if (
       !category ||
-      category.type !==
-        ChannelType.GuildCategory
+      category.type !== ChannelType.GuildCategory
     ) {
       console.error(
-        "❌ Transcript category was not found."
+        "Transcript category was not found."
       );
 
-      return null;
+      return;
     }
 
     const transcript =
       await buildTranscript(channel);
 
-    const ticketOwnerId =
+    const ownerIdForTicket =
       getTicketOwnerId(channel);
 
     const transcriptChannel =
@@ -315,10 +280,7 @@ async function sendTranscript(channel) {
       });
 
     const filePath =
-      path.join(
-        __dirname,
-        `transcript-${Date.now()}.txt`
-      );
+      `./transcript-${Date.now()}.txt`;
 
     fs.writeFileSync(
       filePath,
@@ -331,8 +293,8 @@ async function sendTranscript(channel) {
         `📄 **Ticket Transcript**\n` +
         `Original ticket: **${channel.name}**\n` +
         `Ticket owner: ${
-          ticketOwnerId
-            ? `<@${ticketOwnerId}>`
+          ownerIdForTicket
+            ? `<@${ownerIdForTicket}>`
             : "Unknown"
         }`,
 
@@ -342,14 +304,14 @@ async function sendTranscript(channel) {
     fs.unlinkSync(filePath);
 
     console.log(
-      `✅ Transcript saved for ${channel.name}`
+      `Transcript saved for ${channel.name}`
     );
 
     return transcriptChannel;
 
   } catch (error) {
     console.error(
-      "❌ Failed to save transcript:",
+      "Failed to save transcript:",
       error
     );
 
@@ -367,7 +329,7 @@ async function closeTicket(channel) {
 
   if (!transcriptChannel) {
     console.error(
-      "❌ Transcript could not be saved."
+      "Transcript could not be saved."
     );
   }
 
@@ -376,10 +338,9 @@ async function closeTicket(channel) {
       await channel.delete(
         "Ticket closed by staff."
       );
-
     } catch (error) {
       console.error(
-        "❌ Could not delete ticket:",
+        "Could not delete ticket:",
         error
       );
     }
@@ -392,7 +353,7 @@ async function closeTicket(channel) {
 
 client.once("ready", async () => {
   console.log(
-    `✅ Logged in as ${client.user.tag}`
+    `Logged in as ${client.user.tag}`
   );
 
   console.log(
@@ -411,59 +372,6 @@ client.once("ready", async () => {
     `Staff role: ${staffRoleId}`
   );
 
-  // Asset debug
-  console.log(
-    "================================"
-  );
-
-  console.log(
-    "ASSET DEBUG"
-  );
-
-  console.log(
-    "BOT FOLDER:",
-    __dirname
-  );
-
-  console.log(
-    "ASSETS FOLDER:",
-    assetsFolder
-  );
-
-  console.log(
-    "BANNER PATH:",
-    bannerPath
-  );
-
-  console.log(
-    "BANNER EXISTS:",
-    fs.existsSync(bannerPath)
-  );
-
-  console.log(
-    "PROFILE PATH:",
-    profilePath
-  );
-
-  console.log(
-    "PROFILE EXISTS:",
-    fs.existsSync(profilePath)
-  );
-
-  console.log(
-    "TICKET PANEL PATH:",
-    ticketPanelPath
-  );
-
-  console.log(
-    "TICKET PANEL EXISTS:",
-    fs.existsSync(ticketPanelPath)
-  );
-
-  console.log(
-    "================================"
-  );
-
   try {
     const whitelistChannel =
       await client.channels.fetch(
@@ -475,7 +383,7 @@ client.once("ready", async () => {
       !whitelistChannel.guild
     ) {
       console.error(
-        "❌ Could not find whitelist channel."
+        "Could not find whitelist channel."
       );
 
       return;
@@ -507,29 +415,30 @@ client.once("ready", async () => {
     ]);
 
     console.log(
-      `✅ Registered commands in ${guild.name}`
+      `Registered /clear and /setup-tickets in ${guild.name}`
     );
 
   } catch (error) {
     console.error(
-      "❌ Command registration error:",
+      "Command registration error:",
       error
     );
   }
 });
 
 // ==================================================
-// INTERACTIONS
+// SLASH COMMANDS
 // ==================================================
 
 client.on(
   "interactionCreate",
   async (interaction) => {
+
     try {
 
-      // ==================================================
+      // ==========================================
       // /CLEAR
-      // ==================================================
+      // ==========================================
 
       if (
         interaction.isChatInputCommand() &&
@@ -541,6 +450,7 @@ client.on(
             interaction.user.id
           )
         ) {
+
           await interaction.reply({
             content:
               "❌ You are not authorized to use this command.",
@@ -557,28 +467,24 @@ client.on(
         let deleted = 0;
 
         while (true) {
+
           const messages =
             await interaction.channel.messages.fetch({
               limit: 100,
             });
 
-          if (!messages.size) {
-            break;
-          }
+          if (!messages.size) break;
 
           const recent =
             messages.filter(
               (message) =>
                 Date.now() -
                   message.createdTimestamp <
-                14 *
-                  24 *
-                  60 *
-                  60 *
-                  1000
+                14 * 24 * 60 * 60 * 1000
             );
 
           if (recent.size) {
+
             const deletedMessages =
               await interaction.channel.bulkDelete(
                 recent,
@@ -594,18 +500,15 @@ client.on(
               (message) =>
                 Date.now() -
                   message.createdTimestamp >=
-                14 *
-                  24 *
-                  60 *
-                  60 *
-                  1000
+                14 * 24 * 60 * 60 * 1000
             );
 
           if (oldMessages.size) {
+
             for (
-              const message
-              of oldMessages.values()
+              const message of oldMessages.values()
             ) {
+
               try {
                 await message.delete();
                 deleted++;
@@ -626,9 +529,9 @@ client.on(
         return;
       }
 
-      // ==================================================
+      // ==========================================
       // /SETUP-TICKETS
-      // ==================================================
+      // ==========================================
 
       if (
         interaction.isChatInputCommand() &&
@@ -641,6 +544,7 @@ client.on(
             interaction.user.id
           )
         ) {
+
           await interaction.reply({
             content:
               "❌ You are not authorized to use this command.",
@@ -663,6 +567,7 @@ client.on(
           !panelChannel ||
           !panelChannel.isTextBased()
         ) {
+
           await interaction.editReply({
             content:
               "❌ I couldn't find the ticket panel channel.",
@@ -671,7 +576,12 @@ client.on(
           return;
         }
 
-        let panelAttachment = null;
+        const imagePath =
+          fs.existsSync(
+            "./assets/ticket-panel.png"
+          )
+            ? "./assets/ticket-panel.png"
+            : null;
 
         const panelEmbed =
           new EmbedBuilder()
@@ -689,14 +599,13 @@ client.on(
                 "Atlanta Heights RP • Support",
             });
 
-        if (
-          fs.existsSync(
-            ticketPanelPath
-          )
-        ) {
+        let panelAttachment = null;
+
+        if (imagePath) {
+
           panelAttachment =
             new AttachmentBuilder(
-              ticketPanelPath,
+              imagePath,
               {
                 name:
                   "ticket-panel.png",
@@ -705,10 +614,6 @@ client.on(
 
           panelEmbed.setImage(
             "attachment://ticket-panel.png"
-          );
-        } else {
-          console.log(
-            "❌ ticket-panel.png was not found."
           );
         }
 
@@ -732,20 +637,15 @@ client.on(
           "Gang Support",
         ];
 
-        for (
-          const option
-          of options
-        ) {
+        for (const option of options) {
+
           menu.addOptions(
             new StringSelectMenuOptionBuilder()
               .setLabel(option)
               .setValue(
                 option
                   .toLowerCase()
-                  .replace(
-                    /[^a-z0-9]+/g,
-                    "_"
-                  )
+                  .replace(/[^a-z0-9]+/g, "_")
               )
               .setEmoji(
                 ticketEmoji.name,
@@ -759,13 +659,8 @@ client.on(
             .addComponents(menu);
 
         const sendData = {
-          embeds: [
-            panelEmbed,
-          ],
-
-          components: [
-            row,
-          ],
+          embeds: [panelEmbed],
+          components: [row],
         };
 
         if (panelAttachment) {
@@ -784,15 +679,15 @@ client.on(
         });
 
         console.log(
-          "✅ Ticket panel sent."
+          "Ticket panel sent."
         );
 
         return;
       }
 
-      // ==================================================
+      // ==========================================
       // TICKET DROPDOWN
-      // ==================================================
+      // ==========================================
 
       if (
         interaction.isStringSelectMenu() &&
@@ -833,6 +728,7 @@ client.on(
           typeMap[selected];
 
         if (!ticketType) {
+
           await interaction.reply({
             content:
               "❌ Invalid ticket type.",
@@ -846,6 +742,7 @@ client.on(
           ticketCategories[ticketType];
 
         if (!categoryId) {
+
           await interaction.reply({
             content:
               "❌ Ticket category not configured.",
@@ -872,6 +769,7 @@ client.on(
           category.type !==
             ChannelType.GuildCategory
         ) {
+
           await interaction.editReply({
             content:
               "❌ The ticket category could not be found.",
@@ -889,6 +787,7 @@ client.on(
           );
 
         if (existingTicket) {
+
           await interaction.editReply({
             content:
               `❌ You already have an open ticket: ${existingTicket}`,
@@ -900,22 +799,19 @@ client.on(
         const safeUsername =
           interaction.user.username
             .toLowerCase()
-            .replace(
-              /[^a-z0-9]/g,
-              "-"
-            )
+            .replace(/[^a-z0-9]/g, "-")
             .slice(0, 20);
+
+        const channelName =
+          `${safeUsername}-ticket`;
 
         const ticketChannel =
           await guild.channels.create({
-            name:
-              `${safeUsername}-ticket`,
+            name: channelName,
 
-            type:
-              ChannelType.GuildText,
+            type: ChannelType.GuildText,
 
-            parent:
-              categoryId,
+            parent: categoryId,
 
             topic:
               `ticketOwner:${interaction.user.id} | type:${ticketType}`,
@@ -944,8 +840,7 @@ client.on(
               },
 
               {
-                id:
-                  staffRoleId,
+                id: staffRoleId,
 
                 allow: [
                   PermissionFlagsBits.ViewChannel,
@@ -995,7 +890,7 @@ client.on(
           new EmbedBuilder()
             .setColor(0x0066ff)
             .setTitle(
-              ticketType
+              `${ticketType}`
             )
             .setDescription(
               `Hello <@${interaction.user.id}>!\n\n` +
@@ -1011,14 +906,8 @@ client.on(
         await ticketChannel.send({
           content:
             `<@${interaction.user.id}> <@&${staffRoleId}>`,
-
-          embeds: [
-            ticketEmbed,
-          ],
-
-          components: [
-            buttonRow,
-          ],
+          embeds: [ticketEmbed],
+          components: [buttonRow],
         });
 
         await interaction.editReply({
@@ -1029,9 +918,9 @@ client.on(
         return;
       }
 
-      // ==================================================
+      // ==========================================
       // CLOSE BUTTON
-      // ==================================================
+      // ==========================================
 
       if (
         interaction.isButton() &&
@@ -1044,6 +933,7 @@ client.on(
             interaction.member
           )
         ) {
+
           await interaction.reply({
             content:
               "❌ Only Staff Team members can close tickets.",
@@ -1058,6 +948,7 @@ client.on(
             interaction.channel
           )
         ) {
+
           await interaction.reply({
             content:
               "❌ This is not a ticket channel.",
@@ -1080,28 +971,31 @@ client.on(
       }
 
     } catch (error) {
+
       console.error(
-        "❌ Interaction error:",
+        "Interaction error:",
         error
       );
 
       try {
+
         if (interaction.deferred) {
+
           await interaction.editReply({
             content:
               "❌ Something went wrong. Check Railway logs.",
           });
 
-        } else if (
-          !interaction.replied
-        ) {
+        } else if (!interaction.replied) {
+
           await interaction.reply({
             content:
               "❌ Something went wrong. Check Railway logs.",
-
             ephemeral: true,
           });
+
         }
+
       } catch {}
     }
   }
@@ -1115,42 +1009,30 @@ client.on(
   "messageCreate",
   async (message) => {
 
-    if (message.author.bot) {
-      return;
-    }
+    if (message.author.bot) return;
 
-    if (!message.guild) {
-      return;
-    }
+    if (!message.guild) return;
 
-    // ==================================================
+    // ==========================================
     // $CLOSE
-    // ==================================================
+    // ==========================================
 
     if (
       message.content
         .trim()
-        .toLowerCase() ===
-      "$close"
+        .toLowerCase() === "$close"
     ) {
 
-      if (
-        !isStaff(
-          message.member
-        )
-      ) {
+      if (!isStaff(message.member)) {
         return;
       }
 
-      if (
-        !isTicketChannel(
-          message.channel
-        )
-      ) {
+      if (!isTicketChannel(message.channel)) {
         return;
       }
 
       try {
+
         await message.channel.send(
           "🔒 Saving transcript and closing ticket..."
         );
@@ -1160,6 +1042,7 @@ client.on(
         );
 
       } catch (error) {
+
         console.error(
           "$close error:",
           error
@@ -1169,39 +1052,32 @@ client.on(
       return;
     }
 
-    // ==================================================
+    // ==========================================
     // $DELETE
-    // ==================================================
+    // ==========================================
 
     if (
       message.content
         .trim()
-        .toLowerCase() ===
-      "$delete"
+        .toLowerCase() === "$delete"
     ) {
 
-      if (
-        !isStaff(
-          message.member
-        )
-      ) {
+      if (!isStaff(message.member)) {
         return;
       }
 
-      if (
-        !isTicketChannel(
-          message.channel
-        )
-      ) {
+      if (!isTicketChannel(message.channel)) {
         return;
       }
 
       try {
+
         await message.channel.delete(
           "Ticket deleted by staff."
         );
 
       } catch (error) {
+
         console.error(
           "$delete error:",
           error
@@ -1211,13 +1087,12 @@ client.on(
       return;
     }
 
-    // ==================================================
+    // ==========================================
     // WL
-    // ==================================================
+    // ==========================================
 
     if (
-      message.channelId !==
-      channelId
+      message.channelId !== channelId
     ) {
       return;
     }
@@ -1225,46 +1100,42 @@ client.on(
     if (
       message.content
         .trim()
-        .toLowerCase() !==
-      "wl"
+        .toLowerCase() !== "wl"
     ) {
       return;
     }
 
     try {
 
-      // ==================================================
+      // ------------------------------------------
       // FIND ALLOWLISTED ROLE
-      // ==================================================
+      // ------------------------------------------
 
       const role =
         message.guild.roles.cache.find(
           (r) =>
-            r.name
-              .toLowerCase() ===
-            roleName
-              .toLowerCase()
+            r.name.toLowerCase() ===
+            roleName.toLowerCase()
         );
 
       if (!role) {
+
         console.error(
-          `❌ Role "${roleName}" was not found.`
+          `Role "${roleName}" was not found.`
         );
 
         return;
       }
 
-      // ==================================================
+      // ------------------------------------------
       // REMOVE OLD ROLE
-      // ==================================================
+      // ------------------------------------------
 
       const removeRole =
         message.guild.roles.cache.find(
           (r) =>
-            r.name
-              .toLowerCase() ===
-            removeRoleName
-              .toLowerCase()
+            r.name.toLowerCase() ===
+            removeRoleName.toLowerCase()
         );
 
       if (
@@ -1281,9 +1152,9 @@ client.on(
         );
       }
 
-      // ==================================================
+      // ------------------------------------------
       // GIVE ALLOWLISTED ROLE
-      // ==================================================
+      // ------------------------------------------
 
       if (
         !message.member.roles.cache.has(
@@ -1297,16 +1168,34 @@ client.on(
         );
       }
 
-      // ==================================================
-      // BANNER DEBUG
-      // ==================================================
+      // ==========================================
+      // BANNER DIAGNOSTICS
+      // ==========================================
+
+      const assetsFolder =
+        path.join(
+          __dirname,
+          "assets"
+        );
+
+      const bannerPath =
+        path.join(
+          assetsFolder,
+          "banner.png"
+        );
+
+      const profilePath =
+        path.join(
+          assetsFolder,
+          "profile.png"
+        );
 
       console.log(
-        "================================"
+        "========================================"
       );
 
       console.log(
-        "WHITELIST BANNER DEBUG"
+        "========== WL BANNER DEBUG =========="
       );
 
       console.log(
@@ -1332,28 +1221,18 @@ client.on(
       );
 
       console.log(
-        "BANNER SIZE:",
-        fs.existsSync(bannerPath)
-          ? fs.statSync(bannerPath).size
-          : "FILE NOT FOUND"
-      );
-
-      console.log(
         "PROFILE EXISTS:",
         fs.existsSync(
           profilePath
         )
       );
 
-      console.log(
-        "================================"
-      );
+      let imageBuffer = null;
+      let imageFilename = null;
 
-      // ==================================================
-      // CHOOSE IMAGE
-      // ==================================================
-
-      let imagePath = null;
+      // ------------------------------------------
+      // LOAD BANNER INTO MEMORY
+      // ------------------------------------------
 
       if (
         fs.existsSync(
@@ -1361,11 +1240,22 @@ client.on(
         )
       ) {
 
-        imagePath =
-          bannerPath;
+        imageBuffer =
+          fs.readFileSync(
+            bannerPath
+          );
+
+        imageFilename =
+          "banner.png";
 
         console.log(
-          "✅ Using banner.png for whitelist DM."
+          "BANNER SIZE:",
+          imageBuffer.length,
+          "bytes"
+        );
+
+        console.log(
+          "BANNER LOADED INTO MEMORY: YES"
         );
 
       } else if (
@@ -1374,122 +1264,155 @@ client.on(
         )
       ) {
 
-        imagePath =
-          profilePath;
+        imageBuffer =
+          fs.readFileSync(
+            profilePath
+          );
+
+        imageFilename =
+          "profile.png";
 
         console.log(
-          "⚠️ banner.png not found."
+          "PROFILE SIZE:",
+          imageBuffer.length,
+          "bytes"
         );
 
         console.log(
-          "⚠️ Using profile.png instead."
+          "USING PROFILE.PNG AS FALLBACK"
         );
 
       } else {
 
-        console.log(
-          "❌ NO DM IMAGE FOUND."
+        console.error(
+          "NO BANNER OR PROFILE IMAGE FOUND!"
         );
       }
 
-      // ==================================================
+      // ==========================================
       // CREATE DM EMBED
-      // ==================================================
+      // ==========================================
 
       const dmEmbed =
         new EmbedBuilder()
-          .setColor(
-            0x0066ff
-          )
-
+          .setColor(0x0066ff)
           .setTitle(
             "You are now Allowlisted!"
           )
-
           .setDescription(
             "Welcome to The Atlanta Heights. To ensure you love the city please go to see the news on what's happening or go check out the Tebex!\n\n" +
             "**Or you can go ahead and fly right in the city!**\n\n" +
             "If you are found cheating or abusing anything **YOU WILL BE BANNED**"
           )
-
           .setFooter({
             text:
               "Atlanta Heights RP",
           });
 
-      // ==================================================
-      // ADD BANNER TO EMBED
-      // ==================================================
-
       let dmAttachment = null;
 
-      if (imagePath) {
+      // ------------------------------------------
+      // CREATE ATTACHMENT
+      // ------------------------------------------
 
-        const filename =
-          path.basename(
-            imagePath
-          );
+      if (
+        imageBuffer &&
+        imageFilename
+      ) {
 
         console.log(
-          "ATTACHMENT FILENAME:",
-          filename
+          "CREATING DISCORD ATTACHMENT:",
+          imageFilename
         );
 
         dmAttachment =
           new AttachmentBuilder(
-            imagePath,
+            imageBuffer,
             {
               name:
-                filename,
+                imageFilename,
             }
           );
 
         dmEmbed.setImage(
-          `attachment://${filename}`
+          `attachment://${imageFilename}`
         );
 
         console.log(
-          "✅ Banner attached to DM embed."
+          "EMBED IMAGE SET TO:",
+          `attachment://${imageFilename}`
+        );
+
+      } else {
+
+        console.log(
+          "NO IMAGE ATTACHMENT CREATED."
         );
       }
 
-      // ==================================================
+      // ==========================================
       // SEND DM
-      // ==================================================
+      // ==========================================
 
       try {
+
+        console.log(
+          `ATTEMPTING DM TO: ${message.author.tag}`
+        );
 
         const dmChannel =
           await message.author.createDM();
 
+        console.log(
+          "DM CHANNEL CREATED:",
+          dmChannel.id
+        );
+
         const dmData = {
           embeds: [
-            dmEmbed,
+            dmEmbed
           ],
         };
 
-        if (dmAttachment) {
-          dmData.files = [
-            dmAttachment,
-          ];
-        }
+        if (
+          dmAttachment
+        ) {
 
-        console.log(
-          "📨 Sending whitelist DM..."
-        );
+          dmData.files = [
+            dmAttachment
+          ];
+
+          console.log(
+            "BANNER ATTACHED TO DM: YES"
+          );
+
+        } else {
+
+          console.log(
+            "BANNER ATTACHED TO DM: NO"
+          );
+        }
 
         await dmChannel.send(
           dmData
         );
 
         console.log(
-          `✅ SUCCESS: DM sent to ${message.author.tag}`
+          `SUCCESS: DM + BANNER SENT TO ${message.author.tag}`
+        );
+
+        console.log(
+          "========== END WL BANNER DEBUG =========="
+        );
+
+        console.log(
+          "========================================"
         );
 
       } catch (dmError) {
 
         console.error(
-          `❌ FAILED TO DM ${message.author.tag}`
+          `FAILED TO DM ${message.author.tag}`
         );
 
         console.error(
@@ -1506,11 +1429,19 @@ client.on(
           "DM ERROR MESSAGE:",
           dmError.message
         );
+
+        console.error(
+          "========== END WL BANNER DEBUG =========="
+        );
+
+        console.error(
+          "========================================"
+        );
       }
 
-      // ==================================================
+      // ------------------------------------------
       // NO PUBLIC RESPONSE
-      // ==================================================
+      // ------------------------------------------
 
       console.log(
         `${message.author.tag} was successfully allowlisted.`
@@ -1519,7 +1450,7 @@ client.on(
     } catch (error) {
 
       console.error(
-        "❌ WL ERROR:",
+        "WL ERROR:",
         error
       );
     }
