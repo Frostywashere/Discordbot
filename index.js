@@ -41,6 +41,10 @@ const ownerId =
 const staffRoleId =
   "1543512745922531389";
 
+// ROLESET PERMISSION ROLE
+const roleSetPermissionRoleId =
+  "1546044371747479582";
+
 // TICKET PANEL CHANNEL
 const ticketPanelChannelId =
   "1543513299469996052";
@@ -580,14 +584,48 @@ client.once(
                 .setRequired(true)
           );
 
+      // ==================================================
+      // /ROLESET
+      // ONLY MEMBERS WITH ROLESETS PERMISSION ROLE
+      // ==================================================
+
+      const roleSetCommand =
+        new SlashCommandBuilder()
+          .setName("roleset")
+          .setDescription(
+            "Give one or more roles to a user."
+          )
+          .addUserOption(
+            option =>
+              option
+                .setName("user")
+                .setDescription(
+                  "The user who will receive the roles."
+                )
+                .setRequired(true)
+          );
+
+      // Discord slash commands can have multiple role options.
+      // These are optional, so you can select as many as you need.
+      for (let i = 1; i <= 10; i++) {
+        roleSetCommand.addRoleOption(
+          option =>
+            option
+              .setName(`role${i}`)
+              .setDescription(`Role ${i} to give the user.`)
+              .setRequired(i === 1)
+        );
+      }
+
       await guild.commands.set([
         clearCommand,
         setupTicketsCommand,
         remindCommand,
+        roleSetCommand,
       ]);
 
       console.log(
-        `Registered /clear, /setup-tickets and /remind in ${guild.name}`
+        `Registered /clear, /setup-tickets, /remind and /roleset in ${guild.name}`
       );
 
     } catch (error) {
@@ -608,876 +646,769 @@ client.on(
   "interactionCreate",
   async interaction => {
 
-    try {
-
-      // ==================================================
-      // /CLEAR
+    try {      // ==================================================
+      // SLASH COMMANDS
       // ==================================================
 
       if (
-        interaction.isChatInputCommand() &&
-        interaction.commandName === "clear"
+        interaction.isChatInputCommand()
       ) {
 
+        // ==================================================
+        // /CLEAR
+        // ==================================================
+
         if (
-          !isOwner(
-            interaction.user.id
-          )
+          interaction.commandName ===
+          "clear"
         ) {
 
-          await interaction.reply({
-            content:
-              "❌ You are not authorized to use this command.",
-
-            ephemeral: true,
-          });
-
-          return;
-        }
-
-        await interaction.deferReply({
-          ephemeral: true,
-        });
-
-        let deleted = 0;
-
-        while (true) {
-
-          const messages =
-            await interaction.channel.messages.fetch({
-              limit: 100,
-            });
-
-          if (!messages.size) {
-            break;
-          }
-
-          const recent =
-            messages.filter(
-              message =>
-                Date.now() -
-                message.createdTimestamp <
-                14 *
-                24 *
-                60 *
-                60 *
-                1000
-            );
-
-          if (recent.size) {
-
-            const deletedMessages =
-              await interaction.channel.bulkDelete(
-                recent,
-                true
-              );
-
-            deleted +=
-              deletedMessages.size;
-          }
-
-          const oldMessages =
-            messages.filter(
-              message =>
-                Date.now() -
-                message.createdTimestamp >=
-                14 *
-                24 *
-                60 *
-                60 *
-                1000
-            );
-
-          for (
-            const oldMessage
-            of oldMessages.values()
+          if (
+            !isOwner(
+              interaction.user.id
+            )
           ) {
-
-            try {
-              await oldMessage.delete();
-              deleted++;
-            } catch {}
+            return interaction.reply({
+              content:
+                "❌ Only the bot owner can use this command.",
+              ephemeral: true,
+            });
           }
 
-          if (messages.size < 100) {
-            break;
-          }
-        }
+          try {
 
-        await interaction.editReply({
-          content:
-            `✅ Deleted **${deleted}** messages.`,
-        });
-
-        return;
-      }
-
-      // ==================================================
-      // /SETUP-TICKETS
-      // ==================================================
-
-      if (
-        interaction.isChatInputCommand() &&
-        interaction.commandName ===
-          "setup-tickets"
-      ) {
-
-        if (
-          !isOwner(
-            interaction.user.id
-          )
-        ) {
-
-          await interaction.reply({
-            content:
-              "❌ You are not authorized to use this command.",
-
-            ephemeral: true,
-          });
-
-          return;
-        }
-
-        await interaction.deferReply({
-          ephemeral: true,
-        });
-
-        const panelChannel =
-          await client.channels.fetch(
-            ticketPanelChannelId
-          );
-
-        if (
-          !panelChannel ||
-          !panelChannel.isTextBased()
-        ) {
-
-          await interaction.editReply({
-            content:
-              "❌ I couldn't find the ticket panel channel.",
-          });
-
-          return;
-        }
-
-        // ==================================================
-        // PANEL IMAGE
-        // ==================================================
-
-        const panelImagePath =
-          path.join(
-            __dirname,
-            "assets",
-            "ticket-panel.png"
-          );
-
-        const panelImageExists =
-          fs.existsSync(
-            panelImagePath
-          );
-
-        // ==================================================
-        // PANEL EMBED
-        // ==================================================
-
-        const panelEmbed =
-          new EmbedBuilder()
-            .setColor(0x0066ff)
-
-            .setTitle(
-              "<:c5c3990dd5fc4872b34ac7e02bd290d2:1545228451630415942> Atlanta Heights Support Tickets"
-            )
-
-            .setDescription(
-              "Welcome to The Atlanta Heights Support. To ensure your issue is handled as quickly as possible, please select the most relevant category below.\n\n" +
-
-              "Our staff team will respond as soon as possible — please be patient and provide clear, detailed information so we can assist you efficiently.\n\n" +
-
-              "*If you are found spamming tickets/abusing our ticket system — You will be banned.*"
-            )
-
-            .setFooter({
-              text:
-                "Atlanta Heights RP • Support",
+            await interaction.deferReply({
+              ephemeral: true,
             });
 
-        let panelAttachment = null;
-
-        if (panelImageExists) {
-
-          panelAttachment =
-            new AttachmentBuilder(
-              panelImagePath,
-              {
-                name:
-                  "ticket-panel.png",
-              }
-            );
-
-          panelEmbed.setImage(
-            "attachment://ticket-panel.png"
-          );
-        }
-
-        // ==================================================
-        // TICKET DROPDOWN
-        // ==================================================
-
-        const menu =
-          new StringSelectMenuBuilder()
-            .setCustomId(
-              "ticket_select"
-            )
-            .setPlaceholder(
-              "Select a ticket type..."
-            );
-
-        const ticketOptions = [
-
-          {
-            label:
-              "General Support",
-
-            value:
-              "general_support",
-
-            description:
-              "Open a ticket for general questions or help.",
-          },
-
-          {
-            label:
-              "Player Report",
-
-            value:
-              "player_report",
-
-            description:
-              "Report a player for breaking server rules.",
-          },
-
-          {
-            label:
-              "Donation Ticket",
-
-            value:
-              "donation_ticket",
-
-            description:
-              "Get help with donations, purchases, or Tebex.",
-          },
-
-          {
-            label:
-              "Female Verification",
-
-            value:
-              "female_verification",
-
-            description:
-              "Open a ticket for female verification.",
-          },
-
-          {
-            label:
-              "Staff Reports",
-
-            value:
-              "staff_reports",
-
-            description:
-              "Report a staff member or staff-related issue.",
-          },
-
-          {
-            label:
-              "Ban Appeals",
-
-            value:
-              "ban_appeals",
-
-            description:
-              "Appeal a server ban or false ban.",
-          },
-
-          {
-            label:
-              "Contact a Developer",
-
-            value:
-              "contact_a_developer",
-
-            description:
-              "Contact the development team about an issue.",
-          },
-
-          {
-            label:
-              "Gang Support",
-
-            value:
-              "gang_support",
-
-            description:
-              "Get help with gangs, gang issues, or gang support.",
-          },
-        ];
-
-        for (
-          const option
-          of ticketOptions
-        ) {
-
-          const menuOption =
-            new StringSelectMenuOptionBuilder()
-              .setLabel(
-                option.label
-              )
-              .setValue(
-                option.value
-              )
-              .setDescription(
-                option.description
-              )
-              .setEmoji({
-                id:
-                  ticketEmojiId,
-
-                name:
-                  ticketEmojiName,
+            const messages =
+              await interaction.channel.messages.fetch({
+                limit: 100,
               });
 
-          menu.addOptions(
-            menuOption
-          );
-        }
+            if (!messages.size) {
 
-        const menuRow =
-          new ActionRowBuilder()
-            .addComponents(
-              menu
+              return interaction.editReply({
+                content:
+                  "❌ There are no messages to delete.",
+              });
+
+            }
+
+            await interaction.channel.bulkDelete(
+              messages,
+              true
             );
 
-        const panelData = {
-          embeds: [
-            panelEmbed,
-          ],
-
-          components: [
-            menuRow,
-          ],
-        };
-
-        if (panelAttachment) {
-          panelData.files = [
-            panelAttachment,
-          ];
-        }
-
-        await panelChannel.send(
-          panelData
-        );
-
-        console.log(
-          "SUCCESS: Ticket panel sent."
-        );
-
-        await interaction.editReply({
-          content:
-            "✅ Ticket panel sent successfully!",
-        });
-
-        return;
-      }
-
-      // ==================================================
-      // /REMIND
-      // ==================================================
-
-      if (
-        interaction.isChatInputCommand() &&
-        interaction.commandName === "remind"
-      ) {
-
-        // MUST BE INSIDE A TICKET
-        if (
-          !isTicketChannel(
-            interaction.channel
-          )
-        ) {
-
-          await interaction.reply({
-            content:
-              "❌ This command can only be used inside a ticket.",
-
-            ephemeral: true,
-          });
-
-          return;
-        }
-
-        // ONLY STAFF
-        if (
-          !isStaff(
-            interaction.member
-          )
-        ) {
-
-          await interaction.reply({
-            content:
-              "❌ Only Staff Team members can use this command.",
-
-            ephemeral: true,
-          });
-
-          return;
-        }
-
-        const user =
-          interaction.options.getUser(
-            "user"
-          );
-
-        if (!user) {
-
-          await interaction.reply({
-            content:
-              "❌ Please mention a user.",
-
-            ephemeral: true,
-          });
-
-          return;
-        }
-
-        await interaction.deferReply({
-          ephemeral: true,
-        });
-
-        // ==================================================
-        // REMINDER EMBED
-        // ==================================================
-
-        const reminderEmbed =
-          new EmbedBuilder()
-            .setColor(0x0066ff)
-
-            .setTitle(
-              "Ticket Reminder"
-            )
-
-            .setDescription(
-              `Hey ${user}, you have been reminded about your ticket.\n\n` +
-
-              `**Ticket Information**\n` +
-
-              `Please click the button below to hop into your ticket.`
-            )
-
-            .setFooter({
-              text:
-                "Atlanta Heights RP • Support",
+            return interaction.editReply({
+              content:
+                `✅ Deleted ${messages.size} messages.`,
             });
 
-        // ==================================================
-        // BANNER
-        // ==================================================
+          } catch (error) {
 
-        const bannerPath =
-          path.join(
-            __dirname,
-            "assets",
-            "banner.png"
-          );
+            console.error(
+              "Clear command error:",
+              error
+            );
 
-        let reminderAttachment = null;
+            if (
+              interaction.deferred
+            ) {
+
+              return interaction.editReply({
+                content:
+                  "❌ I couldn't delete the messages. Make sure I have Manage Messages permission.",
+              });
+
+            }
+
+            return interaction.reply({
+              content:
+                "❌ I couldn't delete the messages.",
+              ephemeral: true,
+            });
+          }
+        }
+
+        // ==================================================
+        // /SETUP-TICKETS
+        // ==================================================
 
         if (
-          fs.existsSync(
-            bannerPath
-          )
+          interaction.commandName ===
+          "setup-tickets"
         ) {
 
-          reminderAttachment =
-            new AttachmentBuilder(
-              bannerPath,
-              {
+          if (
+            !isOwner(
+              interaction.user.id
+            )
+          ) {
+            return interaction.reply({
+              content:
+                "❌ Only the bot owner can use this command.",
+              ephemeral: true,
+            });
+          }
+
+          const embed =
+            new EmbedBuilder()
+              .setColor(
+                0x0066ff
+              )
+              .setTitle(
+                "🎫 Atlanta Heights RP Support"
+              )
+              .setDescription(
+                "Need help? Select the type of ticket you need from the menu below.\n\n" +
+                "Please select the correct category so our staff team can help you as quickly as possible."
+              )
+              .setFooter({
+                text:
+                  "Atlanta Heights RP • Support",
+              });
+
+          const menu =
+            new StringSelectMenuBuilder()
+              .setCustomId(
+                "ticket_category"
+              )
+              .setPlaceholder(
+                "Select a ticket category..."
+              );
+
+          for (
+            const category of Object.keys(
+              ticketCategories
+            )
+          ) {
+
+            menu.addOptions({
+              label:
+                category,
+              value:
+                category,
+              emoji:
+                {
+                  name:
+                    ticketEmojiName,
+                  id:
+                    ticketEmojiId,
+                },
+            });
+          }
+
+          const row =
+            new ActionRowBuilder()
+              .addComponents(
+                menu
+              );
+
+          try {
+
+            await interaction.channel.send({
+              embeds: [
+                embed,
+              ],
+              components: [
+                row,
+              ],
+            });
+
+            return interaction.reply({
+              content:
+                "✅ Ticket panel has been sent.",
+              ephemeral: true,
+            });
+
+          } catch (error) {
+
+            console.error(
+              "Setup tickets error:",
+              error
+            );
+
+            return interaction.reply({
+              content:
+                "❌ I couldn't send the ticket panel.",
+              ephemeral: true,
+            });
+          }
+        }
+
+        // ==================================================
+        // /ROLESET
+        // ==================================================
+
+        if (
+          interaction.commandName ===
+          "roleset"
+        ) {
+
+          // The person using /roleset MUST have
+          // this exact role.
+          if (
+            !interaction.member.roles.cache.has(
+              roleSetPermissionRoleId
+            )
+          ) {
+
+            return interaction.reply({
+              content:
+                "❌ You do not have permission to use `/roleset`.",
+              ephemeral: true,
+            });
+          }
+
+          const targetUser =
+            interaction.options.getUser(
+              "user"
+            );
+
+          if (!targetUser) {
+
+            return interaction.reply({
+              content:
+                "❌ You must select a user.",
+              ephemeral: true,
+            });
+          }
+
+          let targetMember;
+
+          try {
+
+            targetMember =
+              await interaction.guild.members.fetch(
+                targetUser.id
+              );
+
+          } catch (error) {
+
+            return interaction.reply({
+              content:
+                "❌ I couldn't find that user in this server.",
+              ephemeral: true,
+            });
+          }
+
+          // ==================================================
+          // COLLECT SELECTED ROLES
+          // ==================================================
+
+          const selectedRoles =
+            [];
+
+          for (
+            let i = 1;
+            i <= 10;
+            i++
+          ) {
+
+            const role =
+              interaction.options.getRole(
+                `role${i}`
+              );
+
+            if (
+              role &&
+              !selectedRoles.some(
+                existingRole =>
+                  existingRole.id ===
+                  role.id
+              )
+            ) {
+
+              selectedRoles.push(
+                role
+              );
+            }
+          }
+
+          if (
+            selectedRoles.length ===
+            0
+          ) {
+
+            return interaction.reply({
+              content:
+                "❌ You need to select at least one role.",
+              ephemeral: true,
+            });
+          }
+
+          // ==================================================
+          // GET BOT MEMBER
+          // ==================================================
+
+          const botMember =
+            interaction.guild.members.me ||
+            await interaction.guild.members.fetch(
+              interaction.client.user.id
+            );
+
+          if (!botMember) {
+
+            return interaction.reply({
+              content:
+                "❌ I couldn't find my bot member.",
+              ephemeral: true,
+            });
+          }
+
+          // ==================================================
+          // CHECK BOT ROLE HIERARCHY
+          // ==================================================
+
+          for (
+            const role of selectedRoles
+          ) {
+
+            if (
+              role.managed
+            ) {
+
+              return interaction.reply({
+                content:
+                  `❌ I can't give the managed role **${role.name}**.`,
+                ephemeral: true,
+              });
+            }
+
+            if (
+              role.position >=
+              botMember.roles.highest.position
+            ) {
+
+              return interaction.reply({
+                content:
+                  `❌ I can't give **${role.name}** because that role is higher than or equal to my highest role.`,
+                ephemeral: true,
+              });
+            }
+          }
+
+          // ==================================================
+          // DON'T MODIFY SERVER OWNER
+          // ==================================================
+
+          if (
+            targetMember.id ===
+            interaction.guild.ownerId
+          ) {
+
+            return interaction.reply({
+              content:
+                "❌ I can't change the server owner's roles.",
+              ephemeral: true,
+            });
+          }
+
+          // ==================================================
+          // ONLY ADD ROLES THEY DON'T ALREADY HAVE
+          // ==================================================
+
+          const rolesToAdd =
+            selectedRoles.filter(
+              role =>
+                !targetMember.roles.cache.has(
+                  role.id
+                )
+            );
+
+          if (
+            rolesToAdd.length ===
+            0
+          ) {
+
+            return interaction.reply({
+              content:
+                `ℹ️ **${targetMember.user.tag}** already has all of the selected roles.`,
+              ephemeral: true,
+            });
+          }
+
+          // ==================================================
+          // ADD ROLES
+          // ==================================================
+
+          try {
+
+            for (
+              const role of rolesToAdd
+            ) {
+
+              await targetMember.roles.add(
+                role,
+                `Roleset used by ${interaction.user.tag}`
+              );
+            }
+
+            const roleList =
+              rolesToAdd
+                .map(
+                  role =>
+                    `**${role.name}**`
+                )
+                .join(", ");
+
+            await interaction.reply({
+              content:
+                `✅ Added ${roleList} to **${targetMember.user.tag}**.`,
+              ephemeral: true,
+            });
+
+            console.log(
+              `[ROLESET] ${interaction.user.tag} gave ${rolesToAdd
+                .map(role => role.name)
+                .join(", ")} to ${targetMember.user.tag}`
+            );
+
+          } catch (error) {
+
+            console.error(
+              "Roleset role assignment error:",
+              error
+            );
+
+            if (
+              interaction.replied ||
+              interaction.deferred
+            ) {
+
+              return;
+            }
+
+            return interaction.reply({
+              content:
+                "❌ I couldn't give those roles. Make sure the bot has **Manage Roles** permission and that its highest role is above the roles you're trying to give.",
+              ephemeral: true,
+            });
+          }
+        }
+
+        // ==================================================
+        // /REMIND
+        // ==================================================
+
+        if (
+          interaction.commandName ===
+          "remind"
+        ) {
+
+          if (
+            !isStaff(
+              interaction.member
+            )
+          ) {
+
+            return interaction.reply({
+              content:
+                "❌ Only staff can use this command.",
+              ephemeral: true,
+            });
+          }
+
+          if (
+            !isTicketChannel(
+              interaction.channel
+            )
+          ) {
+
+            return interaction.reply({
+              content:
+                "❌ This command can only be used inside a ticket.",
+              ephemeral: true,
+            });
+          }
+
+          const user =
+            interaction.options.getUser(
+              "user"
+            );
+
+          if (!user) {
+
+            return interaction.reply({
+              content:
+                "❌ You must select a user.",
+              ephemeral: true,
+            });
+          }
+
+          const ticketLink =
+            `https://discord.com/channels/${interaction.guild.id}/${interaction.channel.id}`;
+
+          const remindEmbed =
+            new EmbedBuilder()
+              .setColor(
+                0x0066ff
+              )
+              .setTitle(
+                "🎫 Ticket Reminder"
+              )
+              .setDescription(
+                `You have a reminder from the staff team regarding your ticket in **${interaction.guild.name}**.`
+              )
+              .addFields({
                 name:
-                  "banner.png",
-              }
+                  "Ticket",
+                value:
+                  `[Click here to view your ticket](${ticketLink})`,
+              })
+              .setFooter({
+                text:
+                  "Atlanta Heights RP",
+              })
+              .setTimestamp();
+
+          try {
+
+            await user.send({
+              embeds: [
+                remindEmbed,
+              ],
+            });
+
+            return interaction.reply({
+              content:
+                `✅ Reminder sent to **${user.tag}**.`,
+              ephemeral: true,
+            });
+
+          } catch (error) {
+
+            console.error(
+              "Remind error:",
+              error
             );
 
-          reminderEmbed.setImage(
-            "attachment://banner.png"
-          );
+            return interaction.reply({
+              content:
+                "❌ I couldn't DM that user. Their DMs may be closed.",
+              ephemeral: true,
+            });
+          }
         }
-
-        // ==================================================
-        // BUTTON TO TICKET
-        // ==================================================
-
-        const ticketButton =
-          new ButtonBuilder()
-            .setLabel(
-              "Hop Into Ticket"
-            )
-            .setStyle(
-              ButtonStyle.Link
-            )
-            .setURL(
-              `https://discord.com/channels/${interaction.guild.id}/${interaction.channel.id}`
-            );
-
-        const reminderRow =
-          new ActionRowBuilder()
-            .addComponents(
-              ticketButton
-            );
-
-        const dmData = {
-          embeds: [
-            reminderEmbed,
-          ],
-
-          components: [
-            reminderRow,
-          ],
-        };
-
-        if (reminderAttachment) {
-          dmData.files = [
-            reminderAttachment,
-          ];
-        }
-
-        try {
-
-          await user.send(
-            dmData
-          );
-
-          await interaction.editReply({
-            content:
-              `✅ Reminder sent to ${user}.`,
-          });
-
-        } catch (error) {
-
-          console.error(
-            "Reminder DM error:",
-            error
-          );
-
-          await interaction.editReply({
-            content:
-              "❌ I couldn't DM that user. Their DMs may be closed.",
-          });
-        }
-
-        return;
       }
 
       // ==================================================
-      // TICKET DROPDOWN
+      // TICKET CATEGORY SELECT MENU
       // ==================================================
 
       if (
         interaction.isStringSelectMenu() &&
         interaction.customId ===
-          "ticket_select"
+          "ticket_category"
       ) {
 
-        const selected =
+        const selectedCategory =
           interaction.values[0];
 
-        const typeMap = {
+        if (
+          !ticketCategories[
+            selectedCategory
+          ]
+        ) {
 
-          general_support:
-            "General Support",
-
-          player_report:
-            "Player Report",
-
-          donation_ticket:
-            "Donation Ticket",
-
-          female_verification:
-            "Female Verification",
-
-          staff_reports:
-            "Staff Reports",
-
-          ban_appeals:
-            "Ban Appeals",
-
-          contact_a_developer:
-            "Contact a Developer",
-
-          gang_support:
-            "Gang Support",
-        };
-
-        const ticketType =
-          typeMap[selected];
-
-        if (!ticketType) {
-
-          await interaction.reply({
+          return interaction.reply({
             content:
-              "❌ Invalid ticket type.",
-
+              "❌ That ticket category doesn't exist.",
             ephemeral: true,
           });
-
-          return;
         }
-
-        const categoryId =
-          ticketCategories[
-            ticketType
-          ];
-
-        if (!categoryId) {
-
-          await interaction.reply({
-            content:
-              "❌ Ticket category not configured.",
-
-            ephemeral: true,
-          });
-
-          return;
-        }
-
-        await interaction.deferReply({
-          ephemeral: true,
-        });
-
-        const guild =
-          interaction.guild;
-
-        // ==================================================
-        // EXISTING TICKET CHECK
-        // ==================================================
 
         const existingTicket =
-          guild.channels.cache.find(
+          interaction.guild.channels.cache.find(
             channel =>
-              isTicketChannel(
-                channel
-              ) &&
-              getTicketOwnerId(
-                channel
-              ) ===
-                interaction.user.id
+              channel.type ===
+                ChannelType.GuildText &&
+              channel.topic &&
+              channel.topic.includes(
+                `ticketOwner:${interaction.user.id}`
+              )
           );
 
         if (existingTicket) {
 
-          await interaction.editReply({
+          return interaction.reply({
             content:
               `❌ You already have an open ticket: ${existingTicket}`,
+            ephemeral: true,
           });
-
-          return;
         }
 
-        // ==================================================
-        // RANDOM TICKET NAME
-        // ==================================================
+        const categoryId =
+          ticketCategories[
+            selectedCategory
+          ];
 
         const ticketNumber =
           randomTicketNumber();
 
-        // ==================================================
-        // CREATE TICKET
-        // ==================================================
+        const safeUsername =
+          interaction.user.username
+            .toLowerCase()
+            .replace(
+              /[^a-z0-9]/g,
+              ""
+            )
+            .slice(
+              0,
+              20
+            );
 
-        const ticketChannel =
-          await guild.channels.create({
+        const channelName =
+          `ticket-${safeUsername}-${ticketNumber}`;
 
-            name:
-              `ticket-${ticketNumber}`,
+        try {
 
-            type:
-              ChannelType.GuildText,
+          const ticketChannel =
+            await interaction.guild.channels.create({
+              name:
+                channelName,
 
-            parent:
-              categoryId,
+              type:
+                ChannelType.GuildText,
 
-            topic:
-              `ticketOwner:${interaction.user.id} | type:${ticketType}`,
+              parent:
+                categoryId,
 
-            permissionOverwrites: [
+              topic:
+                `ticketOwner:${interaction.user.id} | type:${selectedCategory}`,
 
-              {
-                id:
-                  guild.roles.everyone.id,
+              permissionOverwrites: [
+                {
+                  id:
+                    interaction.guild.id,
 
-                deny: [
-                  PermissionFlagsBits.ViewChannel,
-                ],
-              },
+                  deny: [
+                    PermissionFlagsBits.ViewChannel,
+                  ],
+                },
 
-              {
-                id:
-                  interaction.user.id,
+                {
+                  id:
+                    interaction.user.id,
 
-                allow: [
-                  PermissionFlagsBits.ViewChannel,
-                  PermissionFlagsBits.SendMessages,
-                  PermissionFlagsBits.ReadMessageHistory,
-                  PermissionFlagsBits.AttachFiles,
-                  PermissionFlagsBits.EmbedLinks,
-                ],
-              },
+                  allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.AttachFiles,
+                  ],
+                },
 
-              {
-                id:
-                  staffRoleId,
+                {
+                  id:
+                    staffRoleId,
 
-                allow: [
-                  PermissionFlagsBits.ViewChannel,
-                  PermissionFlagsBits.SendMessages,
-                  PermissionFlagsBits.ReadMessageHistory,
-                  PermissionFlagsBits.AttachFiles,
-                  PermissionFlagsBits.EmbedLinks,
-                ],
-              },
+                  allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.ManageMessages,
+                  ],
+                },
 
-              {
-                id:
-                  client.user.id,
+                {
+                  id:
+                    interaction.client.user.id,
 
-                allow: [
-                  PermissionFlagsBits.ViewChannel,
-                  PermissionFlagsBits.SendMessages,
-                  PermissionFlagsBits.ReadMessageHistory,
-                  PermissionFlagsBits.ManageChannels,
-                  PermissionFlagsBits.AttachFiles,
-                  PermissionFlagsBits.EmbedLinks,
-                ],
-              },
+                  allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.ManageChannels,
+                    PermissionFlagsBits.ManageMessages,
+                  ],
+                },
+              ],
+            });
+
+          const ticketEmbed =
+            new EmbedBuilder()
+              .setColor(
+                0x0066ff
+              )
+              .setTitle(
+                `🎫 ${selectedCategory}`
+              )
+              .setDescription(
+                `Welcome <@${interaction.user.id}>!\n\n` +
+                "Please explain what you need help with. A member of the staff team will assist you shortly.\n\n" +
+                "When you're finished, use the **Close Ticket** button below."
+              )
+              .addFields({
+                name:
+                  "Ticket Type",
+                value:
+                  selectedCategory,
+                inline: true,
+              })
+              .setFooter({
+                text:
+                  "Atlanta Heights RP • Support",
+              })
+              .setTimestamp();
+
+          const closeButton =
+            new ButtonBuilder()
+              .setCustomId(
+                "close_ticket"
+              )
+              .setLabel(
+                "Close Ticket"
+              )
+              .setEmoji(
+                "🔒"
+              )
+              .setStyle(
+                ButtonStyle.Danger
+              );
+
+          const ticketRow =
+            new ActionRowBuilder()
+              .addComponents(
+                closeButton
+              );
+
+          await ticketChannel.send({
+            content:
+              `<@${interaction.user.id}> <@&${staffRoleId}>`,
+
+            embeds: [
+              ticketEmbed,
+            ],
+
+            components: [
+              ticketRow,
             ],
           });
 
-        // ==================================================
-        // CLOSE BUTTON
-        // ==================================================
+          return interaction.reply({
+            content:
+              `✅ Your ticket has been created: ${ticketChannel}`,
+            ephemeral: true,
+          });
 
-        const closeButton =
-          new ButtonBuilder()
-            .setCustomId(
-              "close_ticket"
-            )
-            .setLabel(
-              "Close Ticket"
-            )
-            .setEmoji(
-              "🔒"
-            )
-            .setStyle(
-              ButtonStyle.Danger
-            );
+        } catch (error) {
 
-        const buttonRow =
-          new ActionRowBuilder()
-            .addComponents(
-              closeButton
-            );
-
-        // ==================================================
-        // TICKET OPENED EMBED
-        // ==================================================
-
-        const ticketEmbed =
-          new EmbedBuilder()
-            .setColor(0x0066ff)
-
-            .setTitle(
-              "<:c5c3990dd5fc4872b34ac7e02bd290d2:1545228451630415942> Your ticket has been opened"
-            )
-
-            .setDescription(
-              "Our staff have been notified and a member of our team will be with you shortly, please do not ping staff unless given explicit permission by them.\n\n" +
-
-              "Please be respectful and ensure to be as detailed as possible to make sure our team have as much knowledge to assist you as best as they can."
-            )
-
-            .setFooter({
-              text:
-                "Atlanta Heights RP • Support",
-            });
-
-        // ==================================================
-        // TICKET BANNER
-        // ==================================================
-
-        const bannerPath =
-          path.join(
-            __dirname,
-            "assets",
-            "banner.png"
+          console.error(
+            "Ticket creation error:",
+            error
           );
 
-        let ticketAttachment = null;
-
-        if (
-          fs.existsSync(
-            bannerPath
-          )
-        ) {
-
-          ticketAttachment =
-            new AttachmentBuilder(
-              bannerPath,
-              {
-                name:
-                  "banner.png",
-              }
-            );
-
-          ticketEmbed.setImage(
-            "attachment://banner.png"
-          );
+          return interaction.reply({
+            content:
+              "❌ I couldn't create your ticket. Please contact staff.",
+            ephemeral: true,
+          });
         }
-
-        // ==================================================
-        // SEND TICKET MESSAGE
-        // ==================================================
-
-        const ticketMessage = {
-          content:
-            `<@${interaction.user.id}> <@&${staffRoleId}>`,
-
-          embeds: [
-            ticketEmbed,
-          ],
-
-          components: [
-            buttonRow,
-          ],
-        };
-
-        if (ticketAttachment) {
-          ticketMessage.files = [
-            ticketAttachment,
-          ];
-        }
-
-        await ticketChannel.send(
-          ticketMessage
-        );
-
-        await interaction.editReply({
-          content:
-            `✅ Your ticket has been created: ${ticketChannel}`,
-        });
-
-        return;
-      }
-
-      // ==================================================
+      }      // ==================================================
       // CLOSE BUTTON
       // ANYONE CAN CLICK IT
       // ==================================================
