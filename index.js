@@ -90,7 +90,7 @@ const client = new Client({
 const ticketCategories = [
   {
     label: "General Support",
-    description: "Need help with anything server related",
+    description: "Open a ticket in this category for General Support",
     value: "general_support",
     channelName: "ticket",
     categoryId: "1543512897953472552",
@@ -98,15 +98,15 @@ const ticketCategories = [
 
   {
     label: "Player Report",
-    description: "Report a player for breaking server rules",
+    description: "Open a ticket in this category too Report a player for breaking server rules",
     value: "player_report",
     channelName: "ticket",
     categoryId: "1545229419101036566",
   },
 
   {
-    label: "Donation Ticket",
-    description: "Questions about donations or purchases",
+    label: "Donation Support",
+    description: "Open a ticket in this category for Donation Support",
     value: "donation_ticket",
     channelName: "ticket",
     categoryId: "1543512854072926319",
@@ -114,7 +114,7 @@ const ticketCategories = [
 
   {
     label: "Female Verification",
-    description: "Request verification for female roles and perks",
+    description: "Open a ticket in this category to Request verification for female roles and perks",
     value: "female_verification",
     channelName: "ticket",
     categoryId: "1545229787327369276",
@@ -122,7 +122,7 @@ const ticketCategories = [
 
   {
     label: "Staff Reports",
-    description: "Report a staff member's conduct",
+    description: "Open a ticket in this category too report a staff member",
     value: "staff_reports",
     channelName: "ticket",
     categoryId: "1543512857935609927",
@@ -130,7 +130,7 @@ const ticketCategories = [
 
   {
     label: "Ban Appeals",
-    description: "Appeal a server ban or punishment",
+    description: "Open a ticket in this category for an ban appeal, or for an false ban ticket",
     value: "ban_appeals",
     channelName: "ticket",
     categoryId: "1543512899597762580",
@@ -138,7 +138,7 @@ const ticketCategories = [
 
   {
     label: "Contact a Developer",
-    description: "Contact our development team about server issues",
+    description: "Open a ticket in this category too Contact our development team about server issues",
     value: "contact_developer",
     channelName: "ticket",
     categoryId: "1543512901623480360",
@@ -146,7 +146,7 @@ const ticketCategories = [
 
   {
     label: "Gang Support",
-    description: "Get help with gang related questions or issues",
+    description: "Open a ticket in this category too Get help with gang related issues.",
     value: "gang_support",
     channelName: "ticket",
     categoryId: "1543512897953472552",
