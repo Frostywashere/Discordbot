@@ -90,7 +90,8 @@ const client = new Client({
 const ticketCategories = [
   {
     label: "General Support",
-    description: "Open a ticket in this category for General Support",
+    description:
+      "Open a ticket in this category for General Support",
     value: "general_support",
     channelName: "ticket",
     categoryId: "1543512897953472552",
@@ -98,7 +99,8 @@ const ticketCategories = [
 
   {
     label: "Player Report",
-    description: "Open a ticket in this category too Report a player for breaking server rules",
+    description:
+      "Open a ticket in this category to Report a player for breaking server rules",
     value: "player_report",
     channelName: "ticket",
     categoryId: "1545229419101036566",
@@ -106,7 +108,8 @@ const ticketCategories = [
 
   {
     label: "Donation Support",
-    description: "Open a ticket in this category for Donation Support",
+    description:
+      "Open a ticket in this category for Donation Support",
     value: "donation_ticket",
     channelName: "ticket",
     categoryId: "1543512854072926319",
@@ -114,7 +117,8 @@ const ticketCategories = [
 
   {
     label: "Female Verification",
-    description: "Open a ticket in this category to Request verification for female roles and perks",
+    description:
+      "Open a ticket in this category to Request verification for female roles and perks",
     value: "female_verification",
     channelName: "ticket",
     categoryId: "1545229787327369276",
@@ -122,7 +126,8 @@ const ticketCategories = [
 
   {
     label: "Staff Reports",
-    description: "Open a ticket in this category too report a staff member",
+    description:
+      "Open a ticket in this category to report a staff member",
     value: "staff_reports",
     channelName: "ticket",
     categoryId: "1543512857935609927",
@@ -130,7 +135,8 @@ const ticketCategories = [
 
   {
     label: "Ban Appeals",
-    description: "Open a ticket in this category for an ban appeal, or for an false ban ticket",
+    description:
+      "Open a ticket in this category for a ban appeal, or for a false ban ticket",
     value: "ban_appeals",
     channelName: "ticket",
     categoryId: "1543512899597762580",
@@ -138,7 +144,8 @@ const ticketCategories = [
 
   {
     label: "Contact a Developer",
-    description: "Open a ticket in this category too Contact our development team about server issues",
+    description:
+      "Open a ticket in this category to contact our development team about server issues",
     value: "contact_developer",
     channelName: "ticket",
     categoryId: "1543512901623480360",
@@ -146,7 +153,8 @@ const ticketCategories = [
 
   {
     label: "Gang Support",
-    description: "Open a ticket in this category too Get help with gang related issues.",
+    description:
+      "Open a ticket in this category to get help with gang related issues",
     value: "gang_support",
     channelName: "ticket",
     categoryId: "1543512897953472552",
@@ -178,11 +186,11 @@ function isStaff(member) {
 
   return Boolean(
     member.roles.cache.has(staffRoleId) ||
-    member.roles.cache.some(
-      (role) =>
-        role.name.toLowerCase() ===
-        staffRoleName.toLowerCase()
-    )
+      member.roles.cache.some(
+        (role) =>
+          role.name.toLowerCase() ===
+          staffRoleName.toLowerCase()
+      )
   );
 }
 
@@ -598,7 +606,7 @@ function createTicketPanel() {
   const embed = new EmbedBuilder()
     .setColor(0x0066ff)
     .setTitle(
-      " Atlanta Heights Support Tickets"
+      "Atlanta Heights Support Tickets"
     )
     .setDescription(
       "Welcome to Atlanta Heights Support. To ensure your issue is handled as quickly as possible, please select the most relevant category below.\n\n" +
@@ -624,9 +632,11 @@ function createTicketPanel() {
             description:
               ticket.description,
             value: ticket.value,
+
+            // YOUR CUSTOM EMOJI
             emoji: {
-              id: ticketEmojiId,
-              name: ticketEmojiName,
+              id: "1546224146919334040",
+              name: "profile",
             },
           })
         )
@@ -798,7 +808,8 @@ client.on(
           files: [banner],
         });
 
-        await message.delete()
+        await message
+          .delete()
           .catch(() => {});
 
         return;
@@ -954,13 +965,13 @@ client.on(
         return;
       }
 
-      // Give Allowlisted
+      // GIVE ALLOWLISTED
       await message.member.roles.add(
         role,
         "Member said WL in the allowlist channel."
       );
 
-      // Find Non Whitelisted
+      // FIND NON WHITELISTED
       const removeRole =
         message.guild.roles.cache.find(
           (r) =>
@@ -968,7 +979,7 @@ client.on(
             removeRoleName.toLowerCase()
         );
 
-      // Remove Non Whitelisted
+      // REMOVE NON WHITELISTED
       if (
         removeRole &&
         removeRole.id !== role.id &&
@@ -1148,7 +1159,7 @@ client.on(
           },
         ];
 
-        // Staff
+        // STAFF
         if (staffRole) {
           permissionOverwrites.push({
             id:
@@ -1214,7 +1225,7 @@ client.on(
           new EmbedBuilder()
             .setColor(0x0066ff)
             .setDescription(
-              "Please provide a detailed explanation of your issue along with any screenshots or video evidence.\n" +
+              "Please provide a detailed explanation of your issue along with any screenshots or video evidence.\n\n" +
               "If your issue is resolved before staff responds, you may close this ticket using the **Close** button below."
             )
             .setFooter({
