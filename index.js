@@ -593,7 +593,7 @@ function createTicketPanel() {
     .setColor(0x0066ff)
 
     .setTitle(
-      "🎟️ Atlanta Heights Support Tickets"
+      "Atlanta Heights Support Tickets"
     )
 
     .setDescription(
