@@ -145,7 +145,7 @@ const ticketCategories = [
 function createTicketPanel() {
   const embed = new EmbedBuilder()
     .setColor(0x0066ff)
-    .setTitle("🎟️ Atlanta Heights Support Tickets")
+    .setTitle(" Atlanta Heights Support Tickets")
     .setDescription(
       "Welcome to Atlanta Heights Support. To ensure your issue is handled as quickly as possible, please select the most relevant category below.\n\n" +
         "Our staff team will respond as soon as possible — please be patient and provide clear, detailed information so we can assist you efficiently.\n\n" +
