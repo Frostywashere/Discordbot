@@ -674,6 +674,10 @@ client.once("ready", () => {
   console.log(
     `Purge command: ${purgeCommand}`
   );
+
+  console.log(
+    `Reminder command: $remind`
+  );
 });
 
 // ==================================================
@@ -816,6 +820,7 @@ client.on(
           "$close",
           "$transcript",
           "$delete",
+          "$remind",
         ].includes(command)
       ) {
         if (
@@ -862,6 +867,122 @@ client.on(
               filePath,
             ],
           });
+
+          return;
+        }
+
+        // ==================================================
+        // $REMIND
+        // ==================================================
+
+        if (
+          command === "$remind"
+        ) {
+          const topic =
+            message.channel.topic || "";
+
+          const ownerMatch =
+            topic.match(
+              /^ticket-owner:(\d+)$/
+            );
+
+          if (!ownerMatch) {
+            await message.reply(
+              "❌ I couldn't find the owner of this ticket."
+            );
+
+            return;
+          }
+
+          const ownerId =
+            ownerMatch[1];
+
+          const ticketOwner =
+            await message.guild.members
+              .fetch(ownerId)
+              .catch(() => null);
+
+          if (!ticketOwner) {
+            await message.reply(
+              "❌ I couldn't find the ticket owner."
+            );
+
+            return;
+          }
+
+          const ticketUrl =
+            `https://discord.com/channels/${message.guild.id}/${message.channel.id}`;
+
+          const reminderEmbed =
+            new EmbedBuilder()
+              .setColor(0x0066ff)
+              .setTitle(
+                "Ticket Reminder"
+              )
+              .setDescription(
+                `Hey ${ticketOwner}, you have been reminded about your ticket.\n\n` +
+                `**Ticket Information**\n` +
+                `Please click the button below to hop into your ticket.`
+              )
+              .setImage(
+                "attachment://banner.png"
+              )
+              .setFooter({
+                text:
+                  "Atlanta Heights RP • Support",
+              });
+
+          const hopButton =
+            new ButtonBuilder()
+              .setLabel(
+                "Hop Into Ticket"
+              )
+              .setStyle(
+                ButtonStyle.Link
+              )
+              .setURL(
+                ticketUrl
+              )
+              .setEmoji("↗");
+
+          const row =
+            new ActionRowBuilder()
+              .addComponents(
+                hopButton
+              );
+
+          const banner =
+            new AttachmentBuilder(
+              "./assets/banner.png"
+            );
+
+          try {
+            await ticketOwner.send({
+              embeds: [
+                reminderEmbed,
+              ],
+              components: [
+                row,
+              ],
+              files: [
+                banner,
+              ],
+            });
+
+            await message.reply(
+              `✅ Ticket reminder sent to ${ticketOwner}.`
+            );
+
+          } catch (error) {
+            console.error(
+              "Ticket reminder error:",
+              error
+            );
+
+            await message.reply(
+              "❌ I couldn't DM the ticket owner. Their DMs may be closed."
+            );
+          }
 
           return;
         }
@@ -1024,7 +1145,7 @@ client.on(
       }
 
       // NO PUBLIC REPLY
-      // The bot does not reply in the WL channel.
+      // The bot only assigns/removes roles and sends the DM.
 
     } catch (error) {
       console.error(
