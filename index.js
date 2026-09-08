@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const fs = require("fs");
 const path = require("path");
+const http = require("http");
+const crypto = require("crypto");
 
 const {
   Client,
@@ -23,7 +25,10 @@ const {
 
 const token = process.env.DISCORD_TOKEN;
 
+// ==================================================
 // WL SETTINGS
+// ==================================================
+
 const channelId =
   process.env.CHANNEL_ID || "1544875173361221632";
 
@@ -33,55 +38,130 @@ const roleName =
 const removeRoleName =
   process.env.REMOVE_ROLE_NAME || "Non Whitelisted";
 
-// STAFF ROLE
+// ==================================================
+// STAFF SETTINGS
+// ==================================================
+
 const staffRoleId =
   process.env.STAFF_ROLE_ID || "1543512745922531389";
 
 const staffRoleName =
   process.env.STAFF_ROLE_NAME || "Staff";
 
+// ==================================================
+// OWNER SETTINGS
+// ==================================================
+
+const ownerId =
+  process.env.OWNER_ID || "";
+
+// ==================================================
+// TRANSCRIPT SETTINGS
+// ==================================================
+
+const transcriptChannelId =
+  "1545249215595413564";
+
+const publicUrl = (
+  process.env.PUBLIC_URL || ""
+)
+  .replace(/^PUBLIC_URL=/i, "")
+  .replace(/\/+$/, "");
+
+// ==================================================
 // COMMANDS
-const ticketPanelCommand = "$ticketpanel";
-const purgeCommand = ".purge";
+// ==================================================
 
+const ticketPanelCommand =
+  "$ticketpanel";
+
+const purgeCommand =
+  ".purge";
+
+const remindCommand =
+  "$remind";
+
+// ==================================================
 // CUSTOM EMOJI
-const ticketEmojiId = "1546224146919334040";
-const ticketEmojiName = "profile";
+// ==================================================
 
-// TRANSCRIPT FOLDER
-const transcriptsFolder = path.join(
-  __dirname,
-  "transcripts"
-);
+const ticketEmojiId =
+  "1546224146919334040";
+
+const ticketEmojiName =
+  "profile";
+
+// ==================================================
+// FILE PATHS
+// ==================================================
+
+const transcriptsFolder =
+  path.join(
+    __dirname,
+    "transcripts"
+  );
+
+const assetsFolder =
+  path.join(
+    __dirname,
+    "assets"
+  );
+
+const bannerPath =
+  path.join(
+    assetsFolder,
+    "banner.png"
+  );
 
 // ==================================================
 // CHECK TOKEN
 // ==================================================
 
-if (!token || token === "PASTE_YOUR_BOT_TOKEN_HERE") {
-  console.error("Missing DISCORD_TOKEN in .env");
+if (
+  !token ||
+  token ===
+    "PASTE_YOUR_BOT_TOKEN_HERE"
+) {
+  console.error(
+    "Missing DISCORD_TOKEN in Railway Variables."
+  );
+
   process.exit(1);
 }
 
-// Create transcript folder
-if (!fs.existsSync(transcriptsFolder)) {
-  fs.mkdirSync(transcriptsFolder, {
-    recursive: true,
-  });
+// ==================================================
+// CREATE FOLDERS
+// ==================================================
+
+if (
+  !fs.existsSync(
+    transcriptsFolder
+  )
+) {
+  fs.mkdirSync(
+    transcriptsFolder,
+    {
+      recursive: true,
+    }
+  );
 }
 
 // ==================================================
 // CREATE CLIENT
 // ==================================================
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
-  partials: [Partials.Channel],
-});
+const client =
+  new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
+
+    partials: [
+      Partials.Channel,
+    ],
+  });
 
 // ==================================================
 // TICKET CATEGORIES
@@ -89,67 +169,139 @@ const client = new Client({
 
 const ticketCategories = [
   {
-    label: "General Support",
-    description: "Open a ticket in this category for General Support",
-    value: "general_support",
-    channelName: "ticket",
-    categoryId: "1543512897953472552",
+    label:
+      "General Support",
+
+    description:
+      "Open a ticket in this category for General Support",
+
+    value:
+      "general_support",
+
+    channelName:
+      "ticket",
+
+    categoryId:
+      "1543512897953472552",
   },
 
   {
-    label: "Player Report",
-    description: "Open a ticket in this category too Report a player for breaking server rules",
-    value: "player_report",
-    channelName: "ticket",
-    categoryId: "1545229419101036566",
+    label:
+      "Player Report",
+
+    description:
+      "Open a ticket in this category to report a player for breaking server rules",
+
+    value:
+      "player_report",
+
+    channelName:
+      "ticket",
+
+    categoryId:
+      "1545229419101036566",
   },
 
   {
-    label: "Donation Support",
-    description: "Open a ticket in this category for Donation Support",
-    value: "donation_ticket",
-    channelName: "ticket",
-    categoryId: "1543512854072926319",
+    label:
+      "Donation Support",
+
+    description:
+      "Open a ticket in this category for Donation Support",
+
+    value:
+      "donation_ticket",
+
+    channelName:
+      "ticket",
+
+    categoryId:
+      "1543512854072926319",
   },
 
   {
-    label: "Female Verification",
-    description: "Open a ticket in this category to Request verification for female roles and perks",
-    value: "female_verification",
-    channelName: "ticket",
-    categoryId: "1545229787327369276",
+    label:
+      "Female Verification",
+
+    description:
+      "Open a ticket in this category to request verification for female roles and perks",
+
+    value:
+      "female_verification",
+
+    channelName:
+      "ticket",
+
+    categoryId:
+      "1545229787327369276",
   },
 
   {
-    label: "Staff Reports",
-    description: "Open a ticket in this category too report a staff member",
-    value: "staff_reports",
-    channelName: "ticket",
-    categoryId: "1543512857935609927",
+    label:
+      "Staff Reports",
+
+    description:
+      "Open a ticket in this category to report a staff member",
+
+    value:
+      "staff_reports",
+
+    channelName:
+      "ticket",
+
+    categoryId:
+      "1543512857935609927",
   },
 
   {
-    label: "Ban Appeals",
-    description: "Open a ticket in this category for an ban appeal, or for an false ban ticket",
-    value: "ban_appeals",
-    channelName: "ticket",
-    categoryId: "1543512899597762580",
+    label:
+      "Ban Appeals",
+
+    description:
+      "Open a ticket in this category for a ban appeal or false ban",
+
+    value:
+      "ban_appeals",
+
+    channelName:
+      "ticket",
+
+    categoryId:
+      "1543512899597762580",
   },
 
   {
-    label: "Contact a Developer",
-    description: "Open a ticket in this category too Contact our development team about server issues",
-    value: "contact_developer",
-    channelName: "ticket",
-    categoryId: "1543512901623480360",
+    label:
+      "Contact a Developer",
+
+    description:
+      "Open a ticket to contact our development team about server issues",
+
+    value:
+      "contact_developer",
+
+    channelName:
+      "ticket",
+
+    categoryId:
+      "1543512901623480360",
   },
 
   {
-    label: "Gang Support",
-    description: "Open a ticket in this category too Get help with gang related issues.",
-    value: "gang_support",
-    channelName: "ticket",
-    categoryId: "1543512897953472552",
+    label:
+      "Gang Support",
+
+    description:
+      "Open a ticket to get help with gang related issues",
+
+    value:
+      "gang_support",
+
+    channelName:
+      "ticket",
+
+    categoryId:
+      "1543512897953472552",
   },
 ];
 
@@ -158,7 +310,10 @@ const ticketCategories = [
 // ==================================================
 
 function findStaffRole(guild) {
-  const roleById = guild.roles.cache.get(staffRoleId);
+  const roleById =
+    guild.roles.cache.get(
+      staffRoleId
+    );
 
   if (roleById) {
     return roleById;
@@ -177,67 +332,147 @@ function isStaff(member) {
   }
 
   return Boolean(
-    member.roles.cache.has(staffRoleId) ||
-    member.roles.cache.some(
-      (role) =>
-        role.name.toLowerCase() ===
-        staffRoleName.toLowerCase()
-    )
+    member.roles.cache.has(
+      staffRoleId
+    ) ||
+      member.roles.cache.some(
+        (role) =>
+          role.name.toLowerCase() ===
+          staffRoleName.toLowerCase()
+      )
   );
+}
+
+function isOwner(member) {
+  if (!member) {
+    return false;
+  }
+
+  if (!ownerId) {
+    return member.permissions.has(
+      PermissionFlagsBits.ManageGuild
+    );
+  }
+
+  return member.id === ownerId;
 }
 
 function isTicketChannel(channel) {
   return Boolean(
     channel &&
-      channel.type === ChannelType.GuildText &&
-      typeof channel.topic === "string" &&
-      channel.topic.startsWith("ticket-owner:")
+      channel.type ===
+        ChannelType.GuildText &&
+      typeof channel.topic ===
+        "string" &&
+      channel.topic.startsWith(
+        "ticket-owner:"
+      )
   );
 }
 
 function safeFileName(name) {
   return name
-    .replace(/[^a-zA-Z0-9-_]/g, "-")
+    .replace(
+      /[^a-zA-Z0-9-_]/g,
+      "-"
+    )
     .slice(0, 80);
 }
 
 function escapeHtml(text) {
   return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    );
 }
 
 function randomTicketNumber() {
-  return Math.floor(1000 + Math.random() * 9000);
+  return Math.floor(
+    1000 +
+      Math.random() *
+        9000
+  );
+}
+
+function getTicketInfo(channel) {
+  const topic =
+    channel?.topic || "";
+
+  const ownerMatch =
+    topic.match(
+      /ticket-owner:(\d+)/
+    );
+
+  const typeMatch =
+    topic.match(
+      /ticket-type:([^|]+)/
+    );
+
+  return {
+    ownerId:
+      ownerMatch
+        ? ownerMatch[1]
+        : "Unknown",
+
+    ticketType:
+      typeMatch
+        ? typeMatch[1]
+        : "Unknown",
+  };
 }
 
 // ==================================================
 // FETCH ALL MESSAGES
 // ==================================================
 
-async function fetchAllMessages(channel) {
+async function fetchAllMessages(
+  channel
+) {
   const messages = [];
+
   let before;
 
   while (true) {
-    const batch = await channel.messages.fetch({
-      limit: 100,
-      ...(before ? { before } : {}),
-    });
+    const batch =
+      await channel.messages.fetch({
+        limit: 100,
+
+        ...(before
+          ? {
+              before,
+            }
+          : {}),
+      });
 
     if (!batch.size) {
       break;
     }
 
-    messages.push(...batch.values());
+    messages.push(
+      ...batch.values()
+    );
 
-    if (batch.size < 100) {
+    if (
+      batch.size < 100
+    ) {
       break;
     }
 
-    before = batch.last().id;
+    before =
+      batch.last().id;
   }
 
   return messages.sort(
@@ -256,106 +491,228 @@ async function createTranscript(
   closedBy = "Unknown"
 ) {
   const messages =
-    await fetchAllMessages(channel);
+    await fetchAllMessages(
+      channel
+    );
 
   const guildName =
     channel.guild?.name ||
     "Discord Server";
 
-  const ownerId = channel.topic
-    ? channel.topic.replace(
-        "ticket-owner:",
-        ""
+  const {
+    ownerId,
+    ticketType,
+  } =
+    getTicketInfo(
+      channel
+    );
+
+  let ownerTag =
+    ownerId;
+
+  if (
+    ownerId !==
+    "Unknown"
+  ) {
+    const ownerMember =
+      await channel.guild.members
+        .fetch(ownerId)
+        .catch(() => null);
+
+    if (ownerMember) {
+      ownerTag =
+        ownerMember.user.tag;
+    }
+  }
+
+  const transcriptId =
+    crypto.randomUUID();
+
+  // ==================================================
+  // TXT TRANSCRIPT
+  // ==================================================
+
+  const txtContent =
+    messages
+      .map(
+        (message) => {
+          const timestamp =
+            new Date(
+              message.createdTimestamp
+            ).toLocaleString();
+
+          const author =
+            message.author?.tag ||
+            message.author?.username ||
+            "Unknown";
+
+          let content =
+            message.content ||
+            "[No text content]";
+
+          if (
+            message.attachments &&
+            message.attachments.size
+          ) {
+            content +=
+              "\nAttachments:\n" +
+              Array.from(
+                message.attachments.values()
+              )
+                .map(
+                  (attachment) =>
+                    `${
+                      attachment.name ||
+                      "Attachment"
+                    }\n${
+                      attachment.url
+                    }`
+                )
+                .join("\n");
+          }
+
+          return (
+            `[${timestamp}] ${author}\n` +
+            `${content}\n`
+          );
+        }
       )
-    : "Unknown";
-
-  const messageHtml = messages
-    .map((message) => {
-      const timestamp =
-        new Date(
-          message.createdTimestamp
-        ).toLocaleString();
-
-      const author = escapeHtml(
-        message.author?.tag ||
-          message.author?.username ||
-          "Unknown"
+      .join(
+        "\n----------------------------------------\n\n"
       );
 
-      const avatar =
-        message.author?.displayAvatarURL({
-          extension: "png",
-          size: 64,
-        }) || "";
+  const txtFileName =
+    `${safeFileName(
+      channel.name
+    )}-${transcriptId}.txt`;
 
-      const content = escapeHtml(
-        message.content || ""
-      ).replace(/\n/g, "<br>");
+  const htmlFileName =
+    `${transcriptId}.html`;
 
-      const attachments =
-        Array.from(
-          message.attachments.values()
-        )
-          .map(
-            (attachment) =>
-              `<div><a href="${escapeHtml(
-                attachment.url
-              )}" target="_blank">${escapeHtml(
-                attachment.name ||
-                  attachment.url
-              )}</a></div>`
-          )
-          .join("");
-
-      return `
-        <div class="message">
-          <img
-            class="avatar"
-            src="${escapeHtml(avatar)}"
-            alt="avatar"
-          >
-
-          <div class="message-body">
-
-            <div class="message-header">
-              <strong>${author}</strong>
-              <span>${escapeHtml(timestamp)}</span>
-            </div>
-
-            <div class="content">
-              ${
-                content ||
-                "<i>No text content</i>"
-              }
-            </div>
-
-            ${attachments}
-
-          </div>
-        </div>
-      `;
-    })
-    .join("\n");
-
-  const now = new Date();
-
-  const stamp =
-    now.toISOString().replace(
-      /[:.]/g,
-      "-"
-    );
-
-  const fileName =
-    `${safeFileName(channel.name)}-${stamp}.html`;
-
-  const filePath =
+  const txtPath =
     path.join(
       transcriptsFolder,
-      fileName
+      txtFileName
     );
 
-  const html = `<!DOCTYPE html>
+  const htmlPath =
+    path.join(
+      transcriptsFolder,
+      htmlFileName
+    );
 
+  fs.writeFileSync(
+    txtPath,
+    txtContent,
+    "utf8"
+  );
+
+  // ==================================================
+  // HTML MESSAGE HISTORY
+  // ==================================================
+
+  const messageHtml =
+    messages
+      .map(
+        (message) => {
+          const timestamp =
+            new Date(
+              message.createdTimestamp
+            ).toLocaleString();
+
+          const author =
+            escapeHtml(
+              message.author?.tag ||
+                message.author?.username ||
+                "Unknown"
+            );
+
+          const avatar =
+            message.author?.displayAvatarURL({
+              extension:
+                "png",
+              size: 64,
+            }) || "";
+
+          const content =
+            escapeHtml(
+              message.content ||
+                ""
+            ).replace(
+              /\n/g,
+              "<br>"
+            );
+
+          const attachments =
+            Array.from(
+              message.attachments.values()
+            )
+              .map(
+                (attachment) =>
+                  `<div class="attachment">
+                    <a href="${escapeHtml(
+                      attachment.url
+                    )}" target="_blank">
+                      ${escapeHtml(
+                        attachment.name ||
+                          attachment.url
+                      )}
+                    </a>
+                  </div>`
+              )
+              .join("");
+
+          return `
+            <div class="message">
+
+              <img
+                class="avatar"
+                src="${escapeHtml(
+                  avatar
+                )}"
+                alt="avatar"
+              >
+
+              <div class="message-body">
+
+                <div class="message-header">
+                  <strong>
+                    ${author}
+                  </strong>
+
+                  <span>
+                    ${escapeHtml(
+                      timestamp
+                    )}
+                  </span>
+                </div>
+
+                <div class="content">
+                  ${
+                    content ||
+                    "<i>No text content</i>"
+                  }
+                </div>
+
+                ${attachments}
+
+              </div>
+
+            </div>
+          `;
+        }
+      )
+      .join("\n");
+
+  const now =
+    new Date();
+
+  // ==================================================
+  // HTML PAGE
+  // ==================================================
+
+  const html =
+`<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -368,19 +725,26 @@ async function createTranscript(
 >
 
 <title>
-Transcript - ${escapeHtml(
+Atlanta Heights - ${escapeHtml(
   channel.name
 )}
 </title>
 
 <style>
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 24px;
   background: #111318;
   color: #e7e9ee;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
 }
 
 .container {
@@ -391,20 +755,51 @@ body {
 .header {
   background: #191c24;
   border: 1px solid #2b2f3a;
+  border-left: 4px solid #0066ff;
   border-radius: 12px;
-  padding: 20px;
+  padding: 22px;
   margin-bottom: 16px;
 }
 
-h1 {
-  margin: 0 0 10px;
+.logo {
   font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 5px;
 }
 
-.meta {
-  color: #9aa1ae;
+.subtitle {
+  color: #9ca3af;
+  margin-bottom: 20px;
+}
+
+.info {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(210px, 1fr)
+    );
+  gap: 10px;
+}
+
+.info-box {
+  background: #12151b;
+  border: 1px solid #2b2f3a;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.info-title {
+  font-size: 11px;
+  color: #8c94a3;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.info-value {
   font-size: 14px;
-  line-height: 1.7;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .message {
@@ -412,14 +807,15 @@ h1 {
   gap: 12px;
   background: #181b22;
   border-bottom: 1px solid #272b35;
-  padding: 14px 16px;
+  padding: 15px;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: #2a2e38;
+  flex-shrink: 0;
 }
 
 .message-body {
@@ -431,7 +827,11 @@ h1 {
   display: flex;
   gap: 10px;
   align-items: baseline;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+}
+
+.message-header strong {
+  color: #ffffff;
 }
 
 .message-header span {
@@ -440,13 +840,23 @@ h1 {
 }
 
 .content {
-  white-space: normal;
+  line-height: 1.55;
   word-break: break-word;
-  line-height: 1.5;
 }
 
-a {
+.attachment {
+  margin-top: 8px;
+}
+
+.attachment a {
   color: #66aaff;
+}
+
+.footer {
+  text-align: center;
+  color: #737b89;
+  margin-top: 20px;
+  font-size: 12px;
 }
 
 </style>
@@ -459,53 +869,103 @@ a {
 
   <div class="header">
 
-    <h1>
+    <div class="logo">
       Atlanta Heights Ticket Transcript
-    </h1>
+    </div>
 
-    <div class="meta">
+    <div class="subtitle">
+      ${escapeHtml(
+        channel.name
+      )}
+    </div>
 
-      <div>
-        <strong>Server:</strong>
-        ${escapeHtml(guildName)}
+    <div class="info">
+
+      <div class="info-box">
+        <div class="info-title">
+          Ticket
+        </div>
+
+        <div class="info-value">
+          #${escapeHtml(
+            channel.name
+          )}
+        </div>
       </div>
 
-      <div>
-        <strong>Channel:</strong>
-        #${escapeHtml(channel.name)}
+      <div class="info-box">
+        <div class="info-title">
+          Ticket Type
+        </div>
+
+        <div class="info-value">
+          ${escapeHtml(
+            ticketType
+          )}
+        </div>
       </div>
 
-      <div>
-        <strong>Ticket Owner ID:</strong>
-        ${escapeHtml(ownerId)}
+      <div class="info-box">
+        <div class="info-title">
+          Ticket Owner
+        </div>
+
+        <div class="info-value">
+          ${escapeHtml(
+            ownerTag
+          )}
+        </div>
       </div>
 
-      <div>
-        <strong>Closed/Saved By:</strong>
-        ${escapeHtml(closedBy)}
+      <div class="info-box">
+        <div class="info-title">
+          Messages
+        </div>
+
+        <div class="info-value">
+          ${messages.length}
+        </div>
       </div>
 
-      <div>
-        <strong>Saved:</strong>
-        ${escapeHtml(
-          now.toLocaleString()
-        )}
+      <div class="info-box">
+        <div class="info-title">
+          Saved By
+        </div>
+
+        <div class="info-value">
+          ${escapeHtml(
+            closedBy
+          )}
+        </div>
       </div>
 
-      <div>
-        <strong>Messages:</strong>
-        ${messages.length}
+      <div class="info-box">
+        <div class="info-title">
+          Saved
+        </div>
+
+        <div class="info-value">
+          ${escapeHtml(
+            now.toLocaleString()
+          )}
+        </div>
       </div>
 
     </div>
 
   </div>
 
-  <div>
-    ${
-      messageHtml ||
-      '<div class="header">No messages found.</div>'
-    }
+  ${
+    messageHtml ||
+    `
+      <div class="header">
+        No messages found.
+      </div>
+    `
+  }
+
+  <div class="footer">
+    Atlanta Heights RP • Support
   </div>
 
 </div>
@@ -515,20 +975,172 @@ a {
 </html>`;
 
   fs.writeFileSync(
-    filePath,
+    htmlPath,
     html,
     "utf8"
   );
 
-  return filePath;
+  return {
+    id:
+      transcriptId,
+
+    txtPath,
+
+    htmlPath,
+
+    ownerId,
+
+    ownerTag,
+
+    ticketType,
+
+    guildName,
+
+    closedBy,
+  };
+}
+
+// ==================================================
+// SEND TRANSCRIPT TO TRANSCRIPT CHANNEL
+// ==================================================
+
+async function sendTranscript(
+  guild,
+  transcriptData
+) {
+  const transcriptChannel =
+    guild.channels.cache.get(
+      transcriptChannelId
+    );
+
+  if (
+    !transcriptChannel
+  ) {
+    throw new Error(
+      "Transcript channel not found."
+    );
+  }
+
+  let directLink =
+    "Unavailable";
+
+  if (publicUrl) {
+    directLink =
+      `${publicUrl}/transcript/${transcriptData.id}`;
+  }
+
+  const transcriptEmbed =
+    new EmbedBuilder()
+      .setColor(0x0066ff)
+      .setTitle(
+        "Ticket Transcript"
+      )
+      .addFields(
+        {
+          name:
+            "Ticket",
+
+          value:
+            `#${transcriptData
+              .channelName ||
+              "ticket"}`,
+
+          inline: true,
+        },
+
+        {
+          name:
+            "Ticket Type",
+
+          value:
+            transcriptData
+              .ticketType ||
+            "Unknown",
+
+          inline: true,
+        },
+
+        {
+          name:
+            "Ticket Owner",
+
+          value:
+            transcriptData
+              .ownerTag ||
+            "Unknown",
+
+          inline: true,
+        }
+      )
+      .setFooter({
+        text:
+          "Atlanta Heights RP • Support",
+      })
+      .setTimestamp();
+
+  const row =
+    new ActionRowBuilder();
+
+  if (publicUrl) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setLabel(
+          "Direct Link"
+        )
+        .setStyle(
+          ButtonStyle.Link
+        )
+        .setURL(
+          directLink
+        )
+        .setEmoji("↗")
+    );
+  }
+
+  await transcriptChannel.send({
+    embeds: [
+      transcriptEmbed,
+    ],
+
+    components:
+      publicUrl
+        ? [row]
+        : [],
+
+    files: [
+      transcriptData.txtPath,
+    ],
+  });
+
+  return directLink;
+}
+
+// ==================================================
+// PATCH TRANSCRIPT DATA
+// ==================================================
+
+// Adds the channel name before sending the embed.
+function addTranscriptChannelName(
+  transcriptData,
+  channel
+) {
+  return {
+    ...transcriptData,
+
+    channelName:
+      channel.name,
+  };
 }
 
 // ==================================================
 // PURGE CHANNEL
 // ==================================================
 
-async function purgeChannel(channel) {
-  let deletedCount = 0;
+async function purgeChannel(
+  channel
+) {
+  let deletedCount =
+    0;
 
   while (true) {
     const batch =
@@ -571,18 +1183,26 @@ async function purgeChannel(channel) {
           true
         );
 
-      deletedCount += deleted.size;
+      deletedCount +=
+        deleted.size;
     }
 
-    for (const message of old.values()) {
+    for (
+      const message
+      of old.values()
+    ) {
       await message
         .delete()
-        .catch(() => {});
+        .catch(
+          () => {}
+        );
 
       deletedCount++;
     }
 
-    if (batch.size < 100) {
+    if (
+      batch.size < 100
+    ) {
       break;
     }
   }
@@ -595,38 +1215,54 @@ async function purgeChannel(channel) {
 // ==================================================
 
 function createTicketPanel() {
-  const embed = new EmbedBuilder()
-    .setColor(0x0066ff)
-    .setTitle(
-      " Atlanta Heights Support Tickets"
-    )
-    .setDescription(
-      "Welcome to Atlanta Heights Support. To ensure your issue is handled as quickly as possible, please select the most relevant category below.\n\n" +
-      "Our staff team will respond as soon as possible — please be patient and provide clear, detailed information so we can assist you efficiently.\n\n" +
-      "*If you are found spamming tickets/abusing our ticket system — You will be banned.*"
-    )
-    .setImage(
-      "attachment://banner.png"
-    );
+  const embed =
+    new EmbedBuilder()
+      .setColor(0x0066ff)
+
+      .setTitle(
+        "<:profile:1546224146919334040> Atlanta Heights Support Tickets"
+      )
+
+      .setDescription(
+        "Welcome to Atlanta Heights Support. To ensure your issue is handled as quickly as possible, please select the most relevant category below.\n\n" +
+
+        "Our staff team will respond as soon as possible — please be patient and provide clear, detailed information so we can assist you efficiently.\n\n" +
+
+        "*If you are found spamming tickets/abusing our ticket system — You will be banned.*"
+      )
+
+      .setImage(
+        "attachment://banner.png"
+      );
 
   const menu =
     new StringSelectMenuBuilder()
       .setCustomId(
         "ticket_category"
       )
+
       .setPlaceholder(
         "Press here to open a ticket."
       )
+
       .addOptions(
         ticketCategories.map(
           (ticket) => ({
-            label: ticket.label,
+            label:
+              ticket.label,
+
             description:
               ticket.description,
-            value: ticket.value,
+
+            value:
+              ticket.value,
+
             emoji: {
-              id: ticketEmojiId,
-              name: ticketEmojiName,
+              id:
+                ticketEmojiId,
+
+              name:
+                ticketEmojiName,
             },
           })
         )
@@ -634,7 +1270,9 @@ function createTicketPanel() {
 
   const row =
     new ActionRowBuilder()
-      .addComponents(menu);
+      .addComponents(
+        menu
+      );
 
   return {
     embed,
@@ -643,42 +1281,202 @@ function createTicketPanel() {
 }
 
 // ==================================================
+// WEB SERVER FOR TRANSCRIPTS
+// ==================================================
+
+const port =
+  process.env.PORT || 3000;
+
+const server =
+  http.createServer(
+    (req, res) => {
+      try {
+        const requestUrl =
+          new URL(
+            req.url,
+            `http://localhost:${port}`
+          );
+
+        if (
+          requestUrl.pathname.startsWith(
+            "/transcript/"
+          )
+        ) {
+          const transcriptId =
+            requestUrl.pathname
+              .split("/")
+              .filter(Boolean)
+              .pop();
+
+          if (
+            !transcriptId ||
+            !/^[a-f0-9-]+$/i.test(
+              transcriptId
+            )
+          ) {
+            res.writeHead(
+              400,
+              {
+                "Content-Type":
+                  "text/plain; charset=utf-8",
+              }
+            );
+
+            res.end(
+              "Invalid transcript."
+            );
+
+            return;
+          }
+
+          const filePath =
+            path.join(
+              transcriptsFolder,
+              `${transcriptId}.html`
+            );
+
+          if (
+            !fs.existsSync(
+              filePath
+            )
+          ) {
+            res.writeHead(
+              404,
+              {
+                "Content-Type":
+                  "text/plain; charset=utf-8",
+              }
+            );
+
+            res.end(
+              "Transcript not found."
+            );
+
+            return;
+          }
+
+          const html =
+            fs.readFileSync(
+              filePath,
+              "utf8"
+            );
+
+          res.writeHead(
+            200,
+            {
+              "Content-Type":
+                "text/html; charset=utf-8",
+            }
+          );
+
+          res.end(
+            html
+          );
+
+          return;
+        }
+
+        res.writeHead(
+          200,
+          {
+            "Content-Type":
+              "text/plain; charset=utf-8",
+          }
+        );
+
+        res.end(
+          "Atlanta Heights transcript server is online."
+        );
+
+      } catch (error) {
+        console.error(
+          "Web server error:",
+          error
+        );
+
+        res.writeHead(
+          500,
+          {
+            "Content-Type":
+              "text/plain; charset=utf-8",
+          }
+        );
+
+        res.end(
+          "Internal server error."
+        );
+      }
+    }
+  );
+
+server.listen(
+  port,
+  "0.0.0.0",
+  () => {
+    console.log(
+      `Transcript web server listening on port ${port}`
+    );
+
+    if (publicUrl) {
+      console.log(
+        `Public transcript URL: ${publicUrl}`
+      );
+    } else {
+      console.log(
+        "PUBLIC_URL is not configured."
+      );
+    }
+  }
+);
+
+// ==================================================
 // BOT READY
 // ==================================================
 
-client.once("ready", () => {
-  console.log(
-    `Logged in as ${client.user.tag}`
-  );
+client.once(
+  "ready",
+  () => {
+    console.log(
+      `Logged in as ${client.user.tag}`
+    );
 
-  console.log(
-    `WL channel: ${channelId}`
-  );
+    console.log(
+      `WL channel: ${channelId}`
+    );
 
-  console.log(
-    `WL trigger: WL`
-  );
+    console.log(
+      `WL trigger: WL`
+    );
 
-  console.log(
-    `Allowlisted role: ${roleName}`
-  );
+    console.log(
+      `Allowlisted role: ${roleName}`
+    );
 
-  console.log(
-    `Staff role ID: ${staffRoleId}`
-  );
+    console.log(
+      `Remove role: ${removeRoleName}`
+    );
 
-  console.log(
-    `Ticket panel command: ${ticketPanelCommand}`
-  );
+    console.log(
+      `Staff role ID: ${staffRoleId}`
+    );
 
-  console.log(
-    `Purge command: ${purgeCommand}`
-  );
+    console.log(
+      `Ticket panel command: ${ticketPanelCommand}`
+    );
 
-  console.log(
-    `Reminder command: $remind`
-  );
-});
+    console.log(
+      `Reminder command: ${remindCommand}`
+    );
+
+    console.log(
+      `Purge command: ${purgeCommand}`
+    );
+
+    console.log(
+      `Transcript channel: ${transcriptChannelId}`
+    );
+  }
+);
 
 // ==================================================
 // MESSAGE CREATE
@@ -687,11 +1485,18 @@ client.once("ready", () => {
 client.on(
   "messageCreate",
   async (message) => {
-    if (message.author.bot) {
+
+    // Ignore bots
+    if (
+      message.author.bot
+    ) {
       return;
     }
 
-    if (!message.guild) {
+    // Ignore DMs
+    if (
+      !message.guild
+    ) {
       return;
     }
 
@@ -710,7 +1515,11 @@ client.on(
         lowerContent ===
         purgeCommand
       ) {
-        if (!isStaff(message.member)) {
+        if (
+          !isStaff(
+            message.member
+          )
+        ) {
           await message.reply(
             "❌ Only staff can use `.purge`."
           );
@@ -728,7 +1537,9 @@ client.on(
         try {
           await message
             .delete()
-            .catch(() => {});
+            .catch(
+              () => {}
+            );
 
           const deletedCount =
             await purgeChannel(
@@ -744,11 +1555,16 @@ client.on(
               }.`
             );
 
-          setTimeout(() => {
-            confirmation
-              .delete()
-              .catch(() => {});
-          }, 4000);
+          setTimeout(
+            () => {
+              confirmation
+                .delete()
+                .catch(
+                  () => {}
+                );
+            },
+            4000
+          );
 
         } catch (error) {
           console.error(
@@ -760,7 +1576,9 @@ client.on(
             .send(
               "❌ I couldn't clear this chat. Make sure the bot has **Manage Messages** permission."
             )
-            .catch(() => {});
+            .catch(
+              () => {}
+            );
         }
 
         return;
@@ -774,13 +1592,26 @@ client.on(
         lowerContent ===
         ticketPanelCommand.toLowerCase()
       ) {
+
         if (
-          !message.member.permissions.has(
-            PermissionFlagsBits.ManageGuild
+          !isOwner(
+            message.member
           )
         ) {
           await message.reply(
-            "❌ You don't have permission to use this command."
+            "❌ Only the bot owner can use `$ticketpanel`."
+          );
+
+          return;
+        }
+
+        if (
+          !fs.existsSync(
+            bannerPath
+          )
+        ) {
+          await message.reply(
+            "❌ `assets/banner.png` was not found."
           );
 
           return;
@@ -789,21 +1620,33 @@ client.on(
         const {
           embed,
           row,
-        } = createTicketPanel();
+        } =
+          createTicketPanel();
 
         const banner =
           new AttachmentBuilder(
-            "./assets/banner.png"
+            bannerPath
           );
 
         await message.channel.send({
-          embeds: [embed],
-          components: [row],
-          files: [banner],
+          embeds: [
+            embed,
+          ],
+
+          components: [
+            row,
+          ],
+
+          files: [
+            banner,
+          ],
         });
 
-        await message.delete()
-          .catch(() => {});
+        await message
+          .delete()
+          .catch(
+            () => {}
+          );
 
         return;
       }
@@ -813,7 +1656,8 @@ client.on(
       // ==================================================
 
       const command =
-        lowerContent.split(/\s+/)[0];
+        lowerContent
+          .split(/\s+/)[0];
 
       if (
         [
@@ -821,8 +1665,11 @@ client.on(
           "$transcript",
           "$delete",
           "$remind",
-        ].includes(command)
+        ].includes(
+          command
+        )
       ) {
+
         if (
           !isTicketChannel(
             message.channel
@@ -852,21 +1699,29 @@ client.on(
         // ==================================================
 
         if (
-          command === "$transcript"
+          command ===
+          "$transcript"
         ) {
-          const filePath =
+          const transcriptData =
             await createTranscript(
               message.channel,
               message.author.tag
             );
 
-          await message.reply({
-            content:
-              "✅ Transcript saved.",
-            files: [
-              filePath,
-            ],
-          });
+          const completeData =
+            addTranscriptChannelName(
+              transcriptData,
+              message.channel
+            );
+
+          await sendTranscript(
+            message.guild,
+            completeData
+          );
+
+          await message.reply(
+            "✅ Transcript sent."
+          );
 
           return;
         }
@@ -876,17 +1731,22 @@ client.on(
         // ==================================================
 
         if (
-          command === "$remind"
+          command ===
+          "$remind"
         ) {
-          const topic =
-            message.channel.topic || "";
 
-          const ownerMatch =
-            topic.match(
-              /^ticket-owner:(\d+)$/
+          const {
+            ownerId: ticketOwnerId,
+          } =
+            getTicketInfo(
+              message.channel
             );
 
-          if (!ownerMatch) {
+          if (
+            !ticketOwnerId ||
+            ticketOwnerId ===
+              "Unknown"
+          ) {
             await message.reply(
               "❌ I couldn't find the owner of this ticket."
             );
@@ -894,17 +1754,30 @@ client.on(
             return;
           }
 
-          const ownerId =
-            ownerMatch[1];
-
           const ticketOwner =
             await message.guild.members
-              .fetch(ownerId)
-              .catch(() => null);
+              .fetch(
+                ticketOwnerId
+              )
+              .catch(
+                () => null
+              );
 
           if (!ticketOwner) {
             await message.reply(
               "❌ I couldn't find the ticket owner."
+            );
+
+            return;
+          }
+
+          if (
+            !fs.existsSync(
+              bannerPath
+            )
+          ) {
+            await message.reply(
+              "❌ `assets/banner.png` was not found."
             );
 
             return;
@@ -915,18 +1788,26 @@ client.on(
 
           const reminderEmbed =
             new EmbedBuilder()
-              .setColor(0x0066ff)
+              .setColor(
+                0x0066ff
+              )
+
               .setTitle(
                 "Ticket Reminder"
               )
+
               .setDescription(
                 `Hey ${ticketOwner}, you have been reminded about your ticket.\n\n` +
+
                 `**Ticket Information**\n` +
+
                 `Please click the button below to hop into your ticket.`
               )
+
               .setImage(
                 "attachment://banner.png"
               )
+
               .setFooter({
                 text:
                   "Atlanta Heights RP • Support",
@@ -937,13 +1818,18 @@ client.on(
               .setLabel(
                 "Hop Into Ticket"
               )
+
               .setStyle(
                 ButtonStyle.Link
               )
+
               .setURL(
                 ticketUrl
               )
-              .setEmoji("↗");
+
+              .setEmoji(
+                "↗"
+              );
 
           const row =
             new ActionRowBuilder()
@@ -953,7 +1839,7 @@ client.on(
 
           const banner =
             new AttachmentBuilder(
-              "./assets/banner.png"
+              bannerPath
             );
 
           try {
@@ -961,9 +1847,11 @@ client.on(
               embeds: [
                 reminderEmbed,
               ],
+
               components: [
                 row,
               ],
+
               files: [
                 banner,
               ],
@@ -992,11 +1880,25 @@ client.on(
         // ==================================================
 
         if (
-          command === "$close"
+          command ===
+          "$close"
         ) {
-          await createTranscript(
-            message.channel,
-            message.author.tag
+
+          const transcriptData =
+            await createTranscript(
+              message.channel,
+              message.author.tag
+            );
+
+          const completeData =
+            addTranscriptChannelName(
+              transcriptData,
+              message.channel
+            );
+
+          await sendTranscript(
+            message.guild,
+            completeData
           );
 
           await message.reply(
@@ -1009,7 +1911,9 @@ client.on(
                 .delete(
                   "Ticket closed by staff using $close"
                 )
-                .catch(() => {});
+                .catch(
+                  () => {}
+                );
             },
             3000
           );
@@ -1022,8 +1926,10 @@ client.on(
         // ==================================================
 
         if (
-          command === "$delete"
+          command ===
+          "$delete"
         ) {
+
           await message.reply(
             "🗑️ This ticket will be deleted without saving a transcript."
           );
@@ -1034,7 +1940,9 @@ client.on(
                 .delete(
                   "Ticket deleted by staff using $delete"
                 )
-                .catch(() => {});
+                .catch(
+                  () => {}
+                );
             },
             1500
           );
@@ -1055,10 +1963,15 @@ client.on(
       }
 
       if (
-        lowerContent !== "wl"
+        lowerContent !==
+        "wl"
       ) {
         return;
       }
+
+      // ==================================================
+      // FIND ALLOWLISTED ROLE
+      // ==================================================
 
       const role =
         message.guild.roles.cache.find(
@@ -1075,13 +1988,19 @@ client.on(
         return;
       }
 
-      // Give Allowlisted
+      // ==================================================
+      // GIVE ALLOWLISTED
+      // ==================================================
+
       await message.member.roles.add(
         role,
         "Member said WL in the allowlist channel."
       );
 
-      // Find Non Whitelisted
+      // ==================================================
+      // FIND NON WHITELISTED
+      // ==================================================
+
       const removeRole =
         message.guild.roles.cache.find(
           (r) =>
@@ -1089,10 +2008,14 @@ client.on(
             removeRoleName.toLowerCase()
         );
 
-      // Remove Non Whitelisted
+      // ==================================================
+      // REMOVE NON WHITELISTED
+      // ==================================================
+
       if (
         removeRole &&
-        removeRole.id !== role.id &&
+        removeRole.id !==
+          role.id &&
         message.member.roles.cache.has(
           removeRole.id
         )
@@ -1107,45 +2030,65 @@ client.on(
       // WL DM
       // ==================================================
 
-      const banner =
-        new AttachmentBuilder(
-          "./assets/banner.png"
-        );
-
-      const embed =
-        new EmbedBuilder()
-          .setColor(0x0066ff)
-          .setTitle(
-            "You are now Allowlisted!"
-          )
-          .setDescription(
-            "Welcome to The Atlanta Heights. To ensure you love the city please " +
-            "go to see the news on what's happening or go check out the tebex!\n\n" +
-            "**Or you can go ahead and fly right in the city!**\n\n" +
-            "If you are found cheating or abusing anything **YOU WILL BE BANNED**"
-          )
-          .setImage(
-            "attachment://banner.png"
+      if (
+        fs.existsSync(
+          bannerPath
+        )
+      ) {
+        const banner =
+          new AttachmentBuilder(
+            bannerPath
           );
 
-      try {
-        await message.author.send({
-          embeds: [embed],
-          files: [banner],
-        });
+        const embed =
+          new EmbedBuilder()
+            .setColor(
+              0x0066ff
+            )
 
-        console.log(
-          `Successfully DM'd ${message.author.tag}`
-        );
+            .setTitle(
+              "You are now Allowlisted!"
+            )
 
-      } catch (error) {
-        console.log(
-          `Could not DM ${message.author.tag}.`
-        );
+            .setDescription(
+              "Welcome to The Atlanta Heights. To ensure you love the city please " +
+              "go to see the news on what's happening or go check out the tebex!\n\n" +
+
+              "**Or you can go ahead and fly right in the city!**\n\n" +
+
+              "If you are found cheating or abusing anything **YOU WILL BE BANNED**"
+            )
+
+            .setImage(
+              "attachment://banner.png"
+            );
+
+        try {
+          await message.author.send({
+            embeds: [
+              embed,
+            ],
+
+            files: [
+              banner,
+            ],
+          });
+
+          console.log(
+            `Successfully DM'd ${message.author.tag}`
+          );
+
+        } catch (error) {
+          console.log(
+            `Could not DM ${message.author.tag}.`
+          );
+        }
       }
 
-      // NO PUBLIC REPLY
-      // The bot only assigns/removes roles and sends the DM.
+      // ==================================================
+      // IMPORTANT:
+      // NO PUBLIC REPLY TO WL
+      // ==================================================
 
     } catch (error) {
       console.error(
@@ -1174,6 +2117,7 @@ client.on(
         interaction.customId ===
           "ticket_category"
       ) {
+
         const guild =
           interaction.guild;
 
@@ -1192,7 +2136,9 @@ client.on(
           await interaction.reply({
             content:
               "❌ That ticket category is invalid.",
-            ephemeral: true,
+
+            ephemeral:
+              true,
           });
 
           return;
@@ -1207,15 +2153,22 @@ client.on(
             (channel) =>
               channel.type ===
                 ChannelType.GuildText &&
-              channel.topic ===
+
+              typeof channel.topic ===
+                "string" &&
+
+              channel.topic.includes(
                 `ticket-owner:${interaction.user.id}`
+              )
           );
 
         if (existingTicket) {
           await interaction.reply({
             content:
               `❌ You already have an open ticket: ${existingTicket}`,
-            ephemeral: true,
+
+            ephemeral:
+              true,
           });
 
           return;
@@ -1226,11 +2179,16 @@ client.on(
         // ==================================================
 
         const staffRole =
-          findStaffRole(guild);
+          findStaffRole(
+            guild
+          );
 
         // ==================================================
         // PERMISSIONS
         // ==================================================
+
+        const botMember =
+          guild.members.me;
 
         const permissionOverwrites = [
           {
@@ -1248,36 +2206,57 @@ client.on(
 
             allow: [
               PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ReadMessageHistory,
-              PermissionFlagsBits.AttachFiles,
-            ],
-          },
 
-          {
-            id:
-              guild.members.me.id,
-
-            allow: [
-              PermissionFlagsBits.ViewChannel,
               PermissionFlagsBits.SendMessages,
+
               PermissionFlagsBits.ReadMessageHistory,
-              PermissionFlagsBits.ManageChannels,
+
               PermissionFlagsBits.AttachFiles,
             ],
           },
         ];
 
-        // Staff
-        if (staffRole) {
+        if (
+          botMember
+        ) {
+          permissionOverwrites.push({
+            id:
+              botMember.id,
+
+            allow: [
+              PermissionFlagsBits.ViewChannel,
+
+              PermissionFlagsBits.SendMessages,
+
+              PermissionFlagsBits.ReadMessageHistory,
+
+              PermissionFlagsBits.ManageChannels,
+
+              PermissionFlagsBits.AttachFiles,
+
+              PermissionFlagsBits.ManageMessages,
+            ],
+          });
+        }
+
+        // ==================================================
+        // STAFF PERMISSIONS
+        // ==================================================
+
+        if (
+          staffRole
+        ) {
           permissionOverwrites.push({
             id:
               staffRole.id,
 
             allow: [
               PermissionFlagsBits.ViewChannel,
+
               PermissionFlagsBits.SendMessages,
+
               PermissionFlagsBits.ReadMessageHistory,
+
               PermissionFlagsBits.AttachFiles,
             ],
           });
@@ -1288,6 +2267,7 @@ client.on(
         // ==================================================
 
         let ticketNumber;
+
         let ticketName;
 
         do {
@@ -1321,7 +2301,7 @@ client.on(
               selected.categoryId,
 
             topic:
-              `ticket-owner:${interaction.user.id}`,
+              `ticket-owner:${interaction.user.id}|ticket-type:${selected.label}`,
 
             permissionOverwrites,
           });
@@ -1332,11 +2312,16 @@ client.on(
 
         const ticketEmbed =
           new EmbedBuilder()
-            .setColor(0x0066ff)
+            .setColor(
+              0x0066ff
+            )
+
             .setDescription(
-              "Please provide a detailed explanation of your issue along with any screenshots or video evidence.\n" +
+              "Please provide a detailed explanation of your issue along with any screenshots or video evidence.\n\n" +
+
               "If your issue is resolved before staff responds, you may close this ticket using the **Close** button below."
             )
+
             .setFooter({
               text:
                 "Atlanta Heights Support • Ticket System",
@@ -1351,8 +2336,15 @@ client.on(
             .setCustomId(
               "ticket_close"
             )
-            .setLabel("Close")
-            .setEmoji("🔒")
+
+            .setLabel(
+              "Close"
+            )
+
+            .setEmoji(
+              "🔒"
+            )
+
             .setStyle(
               ButtonStyle.Secondary
             );
@@ -1389,7 +2381,9 @@ client.on(
         await interaction.reply({
           content:
             `✅ Your ticket has been created: ${ticketChannel}`,
-          ephemeral: true,
+
+          ephemeral:
+            true,
         });
 
         return;
@@ -1404,6 +2398,7 @@ client.on(
         interaction.customId ===
           "ticket_close"
       ) {
+
         if (
           !isTicketChannel(
             interaction.channel
@@ -1412,7 +2407,9 @@ client.on(
           await interaction.reply({
             content:
               "❌ This is not a ticket channel.",
-            ephemeral: true,
+
+            ephemeral:
+              true,
           });
 
           return;
@@ -1423,7 +2420,11 @@ client.on(
             .setCustomId(
               "ticket_close_confirm"
             )
-            .setLabel("Yes")
+
+            .setLabel(
+              "Yes"
+            )
+
             .setStyle(
               ButtonStyle.Danger
             );
@@ -1433,7 +2434,11 @@ client.on(
             .setCustomId(
               "ticket_close_cancel"
             )
-            .setLabel("No")
+
+            .setLabel(
+              "No"
+            )
+
             .setStyle(
               ButtonStyle.Secondary
             );
@@ -1448,6 +2453,7 @@ client.on(
         await interaction.reply({
           content:
             "🔒 Are you sure you want to close this ticket?",
+
           components: [
             row,
           ],
@@ -1465,6 +2471,7 @@ client.on(
         interaction.customId ===
           "ticket_close_confirm"
       ) {
+
         if (
           !isTicketChannel(
             interaction.channel
@@ -1473,20 +2480,35 @@ client.on(
           await interaction.reply({
             content:
               "❌ This is not a ticket channel.",
-            ephemeral: true,
+
+            ephemeral:
+              true,
           });
 
           return;
         }
 
-        await createTranscript(
-          interaction.channel,
-          interaction.user.tag
+        const transcriptData =
+          await createTranscript(
+            interaction.channel,
+            interaction.user.tag
+          );
+
+        const completeData =
+          addTranscriptChannelName(
+            transcriptData,
+            interaction.channel
+          );
+
+        await sendTranscript(
+          interaction.guild,
+          completeData
         );
 
         await interaction.update({
           content:
             "🔒 Transcript saved. This ticket will close in 3 seconds.",
+
           components: [],
         });
 
@@ -1496,7 +2518,9 @@ client.on(
               .delete(
                 "Ticket closed using the Close button"
               )
-              .catch(() => {});
+              .catch(
+                () => {}
+              );
           },
           3000
         );
@@ -1513,9 +2537,11 @@ client.on(
         interaction.customId ===
           "ticket_close_cancel"
       ) {
+
         await interaction.update({
           content:
             "✅ Ticket close cancelled.",
+
           components: [],
         });
 
@@ -1536,9 +2562,13 @@ client.on(
           .reply({
             content:
               "❌ Something went wrong. Check the bot console for the error.",
-            ephemeral: true,
+
+            ephemeral:
+              true,
           })
-          .catch(() => {});
+          .catch(
+            () => {}
+          );
       }
     }
   }
@@ -1548,4 +2578,6 @@ client.on(
 // LOGIN
 // ==================================================
 
-client.login(token);
+client.login(
+  token
+);
