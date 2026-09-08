@@ -17,6 +17,7 @@ const {
   ButtonStyle,
   ChannelType,
   PermissionFlagsBits,
+  SlashCommandBuilder,
 } = require("discord.js");
 
 // ==================================================
@@ -306,6 +307,77 @@ const ticketCategories = [
 ];
 
 // ==================================================
+// SLASH COMMANDS
+// ==================================================
+
+const slashCommands = [
+
+  // ----------------------------------------------
+  // /ADD
+  // ----------------------------------------------
+
+  new SlashCommandBuilder()
+    .setName("add")
+    .setDescription(
+      "Add a user or role to this ticket."
+    )
+
+    .addUserOption(
+      option =>
+        option
+          .setName("user")
+          .setDescription(
+            "The specific user to add."
+          )
+          .setRequired(false)
+    )
+
+    .addRoleOption(
+      option =>
+        option
+          .setName("role")
+          .setDescription(
+            "The role to add."
+          )
+          .setRequired(false)
+    ),
+
+  // ----------------------------------------------
+  // /REMOVE
+  // ----------------------------------------------
+
+  new SlashCommandBuilder()
+    .setName("remove")
+    .setDescription(
+      "Remove a user or role from this ticket."
+    )
+
+    .addUserOption(
+      option =>
+        option
+          .setName("user")
+          .setDescription(
+            "The specific user to remove."
+          )
+          .setRequired(false)
+    )
+
+    .addRoleOption(
+      option =>
+        option
+          .setName("role")
+          .setDescription(
+            "The role to remove."
+          )
+          .setRequired(false)
+    ),
+
+].map(
+  command =>
+    command.toJSON()
+);
+
+// ==================================================
 // HELPER FUNCTIONS
 // ==================================================
 
@@ -320,7 +392,7 @@ function findStaffRole(guild) {
   }
 
   return guild.roles.cache.find(
-    (role) =>
+    role =>
       role.name.toLowerCase() ===
       staffRoleName.toLowerCase()
   );
@@ -336,7 +408,7 @@ function isStaff(member) {
       staffRoleId
     ) ||
       member.roles.cache.some(
-        (role) =>
+        role =>
           role.name.toLowerCase() ===
           staffRoleName.toLowerCase()
       )
@@ -354,7 +426,10 @@ function isOwner(member) {
     );
   }
 
-  return member.id === ownerId;
+  return (
+    member.id ===
+    ownerId
+  );
 }
 
 function isTicketChannel(channel) {
@@ -446,6 +521,7 @@ async function fetchAllMessages(
   let before;
 
   while (true) {
+
     const batch =
       await channel.messages.fetch({
         limit: 100,
@@ -466,7 +542,8 @@ async function fetchAllMessages(
     );
 
     if (
-      batch.size < 100
+      batch.size <
+      100
     ) {
       break;
     }
@@ -490,6 +567,7 @@ async function createTranscript(
   channel,
   closedBy = "Unknown"
 ) {
+
   const messages =
     await fetchAllMessages(
       channel
@@ -514,10 +592,15 @@ async function createTranscript(
     ownerId !==
     "Unknown"
   ) {
+
     const ownerMember =
       await channel.guild.members
-        .fetch(ownerId)
-        .catch(() => null);
+        .fetch(
+          ownerId
+        )
+        .catch(
+          () => null
+        );
 
     if (ownerMember) {
       ownerTag =
@@ -535,7 +618,8 @@ async function createTranscript(
   const txtContent =
     messages
       .map(
-        (message) => {
+        message => {
+
           const timestamp =
             new Date(
               message.createdTimestamp
@@ -554,13 +638,14 @@ async function createTranscript(
             message.attachments &&
             message.attachments.size
           ) {
+
             content +=
               "\nAttachments:\n" +
               Array.from(
                 message.attachments.values()
               )
                 .map(
-                  (attachment) =>
+                  attachment =>
                     `${
                       attachment.name ||
                       "Attachment"
@@ -580,6 +665,9 @@ async function createTranscript(
       .join(
         "\n----------------------------------------\n\n"
       );
+
+  const now =
+    new Date();
 
   const txtFileName =
     `${safeFileName(
@@ -614,7 +702,8 @@ async function createTranscript(
   const messageHtml =
     messages
       .map(
-        (message) => {
+        message => {
+
           const timestamp =
             new Date(
               message.createdTimestamp
@@ -629,8 +718,7 @@ async function createTranscript(
 
           const avatar =
             message.author?.displayAvatarURL({
-              extension:
-                "png",
+              extension: "png",
               size: 64,
             }) || "";
 
@@ -648,7 +736,7 @@ async function createTranscript(
               message.attachments.values()
             )
               .map(
-                (attachment) =>
+                attachment =>
                   `<div class="attachment">
                     <a href="${escapeHtml(
                       attachment.url
@@ -676,6 +764,7 @@ async function createTranscript(
               <div class="message-body">
 
                 <div class="message-header">
+
                   <strong>
                     ${author}
                   </strong>
@@ -685,13 +774,16 @@ async function createTranscript(
                       timestamp
                     )}
                   </span>
+
                 </div>
 
                 <div class="content">
+
                   ${
                     content ||
                     "<i>No text content</i>"
                   }
+
                 </div>
 
                 ${attachments}
@@ -704,15 +796,13 @@ async function createTranscript(
       )
       .join("\n");
 
-  const now =
-    new Date();
-
   // ==================================================
   // HTML PAGE
   // ==================================================
 
   const html =
 `<!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -882,6 +972,7 @@ body {
     <div class="info">
 
       <div class="info-box">
+
         <div class="info-title">
           Ticket
         </div>
@@ -891,9 +982,11 @@ body {
             channel.name
           )}
         </div>
+
       </div>
 
       <div class="info-box">
+
         <div class="info-title">
           Ticket Type
         </div>
@@ -903,9 +996,11 @@ body {
             ticketType
           )}
         </div>
+
       </div>
 
       <div class="info-box">
+
         <div class="info-title">
           Ticket Owner
         </div>
@@ -915,9 +1010,11 @@ body {
             ownerTag
           )}
         </div>
+
       </div>
 
       <div class="info-box">
+
         <div class="info-title">
           Messages
         </div>
@@ -925,9 +1022,11 @@ body {
         <div class="info-value">
           ${messages.length}
         </div>
+
       </div>
 
       <div class="info-box">
+
         <div class="info-title">
           Saved By
         </div>
@@ -937,9 +1036,11 @@ body {
             closedBy
           )}
         </div>
+
       </div>
 
       <div class="info-box">
+
         <div class="info-title">
           Saved
         </div>
@@ -949,6 +1050,7 @@ body {
             now.toLocaleString()
           )}
         </div>
+
       </div>
 
     </div>
@@ -997,17 +1099,21 @@ body {
     guildName,
 
     closedBy,
+
+    channelName:
+      channel.name,
   };
 }
 
 // ==================================================
-// SEND TRANSCRIPT TO TRANSCRIPT CHANNEL
+// SEND TRANSCRIPT
 // ==================================================
 
 async function sendTranscript(
   guild,
   transcriptData
 ) {
+
   const transcriptChannel =
     guild.channels.cache.get(
       transcriptChannelId
@@ -1021,31 +1127,27 @@ async function sendTranscript(
     );
   }
 
-  let directLink =
-    "Unavailable";
-
-  if (publicUrl) {
-    directLink =
-      `${publicUrl}/transcript/${transcriptData.id}`;
-  }
-
   const transcriptEmbed =
     new EmbedBuilder()
-      .setColor(0x0066ff)
+      .setColor(
+        0x0066ff
+      )
+
       .setTitle(
         "Ticket Transcript"
       )
+
       .addFields(
+
         {
           name:
             "Ticket",
 
           value:
-            `#${transcriptData
-              .channelName ||
-              "ticket"}`,
+            `#${transcriptData.channelName || "ticket"}`,
 
-          inline: true,
+          inline:
+            true,
         },
 
         {
@@ -1053,11 +1155,11 @@ async function sendTranscript(
             "Ticket Type",
 
           value:
-            transcriptData
-              .ticketType ||
+            transcriptData.ticketType ||
             "Unknown",
 
-          inline: true,
+          inline:
+            true,
         },
 
         {
@@ -1065,35 +1167,55 @@ async function sendTranscript(
             "Ticket Owner",
 
           value:
-            transcriptData
-              .ownerTag ||
+            transcriptData.ownerTag ||
             "Unknown",
 
-          inline: true,
+          inline:
+            true,
         }
       )
+
       .setFooter({
         text:
           "Atlanta Heights RP • Support",
       })
+
       .setTimestamp();
 
-  const row =
-    new ActionRowBuilder();
+  const components =
+    [];
 
-  if (publicUrl) {
-    row.addComponents(
-      new ButtonBuilder()
-        .setLabel(
-          "Direct Link"
-        )
-        .setStyle(
-          ButtonStyle.Link
-        )
-        .setURL(
-          directLink
-        )
-        .setEmoji("↗")
+  if (
+    publicUrl
+  ) {
+
+    const directLink =
+      `${publicUrl}/transcript/${transcriptData.id}`;
+
+    const row =
+      new ActionRowBuilder()
+        .addComponents(
+
+          new ButtonBuilder()
+            .setLabel(
+              "Direct Link"
+            )
+
+            .setStyle(
+              ButtonStyle.Link
+            )
+
+            .setURL(
+              directLink
+            )
+
+            .setEmoji(
+              "↗"
+            )
+        );
+
+    components.push(
+      row
     );
   }
 
@@ -1102,34 +1224,14 @@ async function sendTranscript(
       transcriptEmbed,
     ],
 
-    components:
-      publicUrl
-        ? [row]
-        : [],
+    components,
 
     files: [
       transcriptData.txtPath,
     ],
   });
 
-  return directLink;
-}
-
-// ==================================================
-// PATCH TRANSCRIPT DATA
-// ==================================================
-
-// Adds the channel name before sending the embed.
-function addTranscriptChannelName(
-  transcriptData,
-  channel
-) {
-  return {
-    ...transcriptData,
-
-    channelName:
-      channel.name,
-  };
+  return true;
 }
 
 // ==================================================
@@ -1139,10 +1241,12 @@ function addTranscriptChannelName(
 async function purgeChannel(
   channel
 ) {
+
   let deletedCount =
     0;
 
   while (true) {
+
     const batch =
       await channel.messages.fetch({
         limit: 100,
@@ -1154,7 +1258,7 @@ async function purgeChannel(
 
     const recent =
       batch.filter(
-        (message) =>
+        message =>
           Date.now() -
             message.createdTimestamp <
           14 *
@@ -1166,7 +1270,7 @@ async function purgeChannel(
 
     const old =
       batch.filter(
-        (message) =>
+        message =>
           Date.now() -
             message.createdTimestamp >=
           14 *
@@ -1177,6 +1281,7 @@ async function purgeChannel(
       );
 
     if (recent.size) {
+
       const deleted =
         await channel.bulkDelete(
           recent,
@@ -1191,6 +1296,7 @@ async function purgeChannel(
       const message
       of old.values()
     ) {
+
       await message
         .delete()
         .catch(
@@ -1201,7 +1307,8 @@ async function purgeChannel(
     }
 
     if (
-      batch.size < 100
+      batch.size <
+      100
     ) {
       break;
     }
@@ -1215,15 +1322,20 @@ async function purgeChannel(
 // ==================================================
 
 function createTicketPanel() {
+
   const embed =
     new EmbedBuilder()
-      .setColor(0x0066ff)
+
+      .setColor(
+        0x0066ff
+      )
 
       .setTitle(
         "<:profile:1546224146919334040> Atlanta Heights Support Tickets"
       )
 
       .setDescription(
+
         "Welcome to Atlanta Heights Support. To ensure your issue is handled as quickly as possible, please select the most relevant category below.\n\n" +
 
         "Our staff team will respond as soon as possible — please be patient and provide clear, detailed information so we can assist you efficiently.\n\n" +
@@ -1237,6 +1349,7 @@ function createTicketPanel() {
 
   const menu =
     new StringSelectMenuBuilder()
+
       .setCustomId(
         "ticket_category"
       )
@@ -1246,8 +1359,10 @@ function createTicketPanel() {
       )
 
       .addOptions(
+
         ticketCategories.map(
-          (ticket) => ({
+          ticket => ({
+
             label:
               ticket.label,
 
@@ -1264,6 +1379,7 @@ function createTicketPanel() {
               name:
                 ticketEmojiName,
             },
+
           })
         )
       );
@@ -1281,7 +1397,7 @@ function createTicketPanel() {
 }
 
 // ==================================================
-// WEB SERVER FOR TRANSCRIPTS
+// WEB SERVER
 // ==================================================
 
 const port =
@@ -1290,18 +1406,25 @@ const port =
 const server =
   http.createServer(
     (req, res) => {
+
       try {
+
         const requestUrl =
           new URL(
             req.url,
             `http://localhost:${port}`
           );
 
+        // ----------------------------------------------
+        // TRANSCRIPT PAGE
+        // ----------------------------------------------
+
         if (
           requestUrl.pathname.startsWith(
             "/transcript/"
           )
         ) {
+
           const transcriptId =
             requestUrl.pathname
               .split("/")
@@ -1314,6 +1437,7 @@ const server =
               transcriptId
             )
           ) {
+
             res.writeHead(
               400,
               {
@@ -1340,6 +1464,7 @@ const server =
               filePath
             )
           ) {
+
             res.writeHead(
               404,
               {
@@ -1376,6 +1501,10 @@ const server =
           return;
         }
 
+        // ----------------------------------------------
+        // HOME PAGE
+        // ----------------------------------------------
+
         res.writeHead(
           200,
           {
@@ -1389,6 +1518,7 @@ const server =
         );
 
       } catch (error) {
+
         console.error(
           "Web server error:",
           error
@@ -1413,15 +1543,19 @@ server.listen(
   port,
   "0.0.0.0",
   () => {
+
     console.log(
       `Transcript web server listening on port ${port}`
     );
 
     if (publicUrl) {
+
       console.log(
         `Public transcript URL: ${publicUrl}`
       );
+
     } else {
+
       console.log(
         "PUBLIC_URL is not configured."
       );
@@ -1435,7 +1569,8 @@ server.listen(
 
 client.once(
   "ready",
-  () => {
+  async () => {
+
     console.log(
       `Logged in as ${client.user.tag}`
     );
@@ -1475,6 +1610,34 @@ client.once(
     console.log(
       `Transcript channel: ${transcriptChannelId}`
     );
+
+    // ==================================================
+    // REGISTER SLASH COMMANDS
+    // ==================================================
+
+    for (
+      const guild
+      of client.guilds.cache.values()
+    ) {
+
+      try {
+
+        await guild.commands.set(
+          slashCommands
+        );
+
+        console.log(
+          `Registered /add and /remove in ${guild.name}`
+        );
+
+      } catch (error) {
+
+        console.error(
+          `Could not register slash commands in ${guild.name}:`,
+          error
+        );
+      }
+    }
   }
 );
 
@@ -1484,16 +1647,22 @@ client.once(
 
 client.on(
   "messageCreate",
-  async (message) => {
+  async message => {
 
-    // Ignore bots
+    // ----------------------------------------------
+    // IGNORE BOTS
+    // ----------------------------------------------
+
     if (
       message.author.bot
     ) {
       return;
     }
 
-    // Ignore DMs
+    // ----------------------------------------------
+    // IGNORE DMS
+    // ----------------------------------------------
+
     if (
       !message.guild
     ) {
@@ -1501,6 +1670,7 @@ client.on(
     }
 
     try {
+
       const content =
         message.content.trim();
 
@@ -1515,11 +1685,13 @@ client.on(
         lowerContent ===
         purgeCommand
       ) {
+
         if (
           !isStaff(
             message.member
           )
         ) {
+
           await message.reply(
             "❌ Only staff can use `.purge`."
           );
@@ -1535,6 +1707,7 @@ client.on(
         }
 
         try {
+
           await message
             .delete()
             .catch(
@@ -1557,16 +1730,19 @@ client.on(
 
           setTimeout(
             () => {
+
               confirmation
                 .delete()
                 .catch(
                   () => {}
                 );
+
             },
             4000
           );
 
         } catch (error) {
+
           console.error(
             "Purge error:",
             error
@@ -1598,6 +1774,7 @@ client.on(
             message.member
           )
         ) {
+
           await message.reply(
             "❌ Only the bot owner can use `$ticketpanel`."
           );
@@ -1610,6 +1787,7 @@ client.on(
             bannerPath
           )
         ) {
+
           await message.reply(
             "❌ `assets/banner.png` was not found."
           );
@@ -1629,6 +1807,7 @@ client.on(
           );
 
         await message.channel.send({
+
           embeds: [
             embed,
           ],
@@ -1640,6 +1819,7 @@ client.on(
           files: [
             banner,
           ],
+
         });
 
         await message
@@ -1665,16 +1845,22 @@ client.on(
           "$transcript",
           "$delete",
           "$remind",
+          "$rename",
         ].includes(
           command
         )
       ) {
+
+        // ----------------------------------------------
+        // TICKET CHECK
+        // ----------------------------------------------
 
         if (
           !isTicketChannel(
             message.channel
           )
         ) {
+
           await message.reply(
             "❌ This command can only be used inside a ticket."
           );
@@ -1682,11 +1868,16 @@ client.on(
           return;
         }
 
+        // ----------------------------------------------
+        // STAFF CHECK
+        // ----------------------------------------------
+
         if (
           !isStaff(
             message.member
           )
         ) {
+
           await message.reply(
             "❌ Only staff can use this ticket command."
           );
@@ -1702,21 +1893,16 @@ client.on(
           command ===
           "$transcript"
         ) {
+
           const transcriptData =
             await createTranscript(
               message.channel,
               message.author.tag
             );
 
-          const completeData =
-            addTranscriptChannelName(
-              transcriptData,
-              message.channel
-            );
-
           await sendTranscript(
             message.guild,
-            completeData
+            transcriptData
           );
 
           await message.reply(
@@ -1736,7 +1922,8 @@ client.on(
         ) {
 
           const {
-            ownerId: ticketOwnerId,
+            ownerId:
+              ticketOwnerId,
           } =
             getTicketInfo(
               message.channel
@@ -1747,6 +1934,7 @@ client.on(
             ticketOwnerId ===
               "Unknown"
           ) {
+
             await message.reply(
               "❌ I couldn't find the owner of this ticket."
             );
@@ -1763,7 +1951,10 @@ client.on(
                 () => null
               );
 
-          if (!ticketOwner) {
+          if (
+            !ticketOwner
+          ) {
+
             await message.reply(
               "❌ I couldn't find the ticket owner."
             );
@@ -1776,6 +1967,7 @@ client.on(
               bannerPath
             )
           ) {
+
             await message.reply(
               "❌ `assets/banner.png` was not found."
             );
@@ -1788,6 +1980,7 @@ client.on(
 
           const reminderEmbed =
             new EmbedBuilder()
+
               .setColor(
                 0x0066ff
               )
@@ -1797,6 +1990,7 @@ client.on(
               )
 
               .setDescription(
+
                 `Hey ${ticketOwner}, you have been reminded about your ticket.\n\n` +
 
                 `**Ticket Information**\n` +
@@ -1815,6 +2009,7 @@ client.on(
 
           const hopButton =
             new ButtonBuilder()
+
               .setLabel(
                 "Hop Into Ticket"
               )
@@ -1843,7 +2038,9 @@ client.on(
             );
 
           try {
+
             await ticketOwner.send({
+
               embeds: [
                 reminderEmbed,
               ],
@@ -1855,6 +2052,7 @@ client.on(
               files: [
                 banner,
               ],
+
             });
 
             await message.reply(
@@ -1862,6 +2060,7 @@ client.on(
             );
 
           } catch (error) {
+
             console.error(
               "Ticket reminder error:",
               error
@@ -1869,6 +2068,97 @@ client.on(
 
             await message.reply(
               "❌ I couldn't DM the ticket owner. Their DMs may be closed."
+            );
+          }
+
+          return;
+        }
+
+        // ==================================================
+        // $RENAME
+        // ==================================================
+
+        if (
+          command ===
+          "$rename"
+        ) {
+
+          const newName =
+            content
+              .slice(
+                "$rename".length
+              )
+              .trim();
+
+          if (
+            !newName
+          ) {
+
+            await message.reply(
+              "❌ Usage: `$rename new-ticket-name`"
+            );
+
+            return;
+          }
+
+          const cleanName =
+            newName
+              .toLowerCase()
+              .replace(
+                /\s+/g,
+                "-"
+              )
+              .replace(
+                /[^a-z0-9-_]/g,
+                ""
+              )
+              .replace(
+                /-+/g,
+                "-"
+              )
+              .replace(
+                /^-+|-+$/g,
+                ""
+              )
+              .slice(
+                0,
+                90
+              );
+
+          if (
+            !cleanName
+          ) {
+
+            await message.reply(
+              "❌ Please enter a valid ticket name."
+            );
+
+            return;
+          }
+
+          try {
+
+            const oldName =
+              message.channel.name;
+
+            await message.channel.setName(
+              cleanName,
+              `Ticket renamed by ${message.author.tag}`
+            );
+
+            await message.reply(
+              `✅ Ticket renamed from **${oldName}** to **${cleanName}**.`
+            );
+
+          } catch (error) {
+
+            console.error(
+              "Rename error:",
+              error
+            );
+
+            await message.reply(
+              "❌ I couldn't rename this ticket. Make sure the bot has **Manage Channels** permission."
             );
           }
 
@@ -1890,15 +2180,9 @@ client.on(
               message.author.tag
             );
 
-          const completeData =
-            addTranscriptChannelName(
-              transcriptData,
-              message.channel
-            );
-
           await sendTranscript(
             message.guild,
-            completeData
+            transcriptData
           );
 
           await message.reply(
@@ -1907,6 +2191,7 @@ client.on(
 
           setTimeout(
             async () => {
+
               await message.channel
                 .delete(
                   "Ticket closed by staff using $close"
@@ -1914,6 +2199,7 @@ client.on(
                 .catch(
                   () => {}
                 );
+
             },
             3000
           );
@@ -1936,6 +2222,7 @@ client.on(
 
           setTimeout(
             async () => {
+
               await message.channel
                 .delete(
                   "Ticket deleted by staff using $delete"
@@ -1943,6 +2230,7 @@ client.on(
                 .catch(
                   () => {}
                 );
+
             },
             1500
           );
@@ -1969,18 +2257,19 @@ client.on(
         return;
       }
 
-      // ==================================================
-      // FIND ALLOWLISTED ROLE
-      // ==================================================
+      // ----------------------------------------------
+      // FIND ALLOWLISTED
+      // ----------------------------------------------
 
       const role =
         message.guild.roles.cache.find(
-          (r) =>
+          r =>
             r.name.toLowerCase() ===
             roleName.toLowerCase()
         );
 
       if (!role) {
+
         console.error(
           `Role "${roleName}" was not found.`
         );
@@ -1988,29 +2277,29 @@ client.on(
         return;
       }
 
-      // ==================================================
+      // ----------------------------------------------
       // GIVE ALLOWLISTED
-      // ==================================================
+      // ----------------------------------------------
 
       await message.member.roles.add(
         role,
         "Member said WL in the allowlist channel."
       );
 
-      // ==================================================
+      // ----------------------------------------------
       // FIND NON WHITELISTED
-      // ==================================================
+      // ----------------------------------------------
 
       const removeRole =
         message.guild.roles.cache.find(
-          (r) =>
+          r =>
             r.name.toLowerCase() ===
             removeRoleName.toLowerCase()
         );
 
-      // ==================================================
+      // ----------------------------------------------
       // REMOVE NON WHITELISTED
-      // ==================================================
+      // ----------------------------------------------
 
       if (
         removeRole &&
@@ -2020,21 +2309,23 @@ client.on(
           removeRole.id
         )
       ) {
+
         await message.member.roles.remove(
           removeRole,
           "Member was given the Allowlisted role."
         );
       }
 
-      // ==================================================
+      // ----------------------------------------------
       // WL DM
-      // ==================================================
+      // ----------------------------------------------
 
       if (
         fs.existsSync(
           bannerPath
         )
       ) {
+
         const banner =
           new AttachmentBuilder(
             bannerPath
@@ -2042,6 +2333,7 @@ client.on(
 
         const embed =
           new EmbedBuilder()
+
             .setColor(
               0x0066ff
             )
@@ -2051,7 +2343,9 @@ client.on(
             )
 
             .setDescription(
+
               "Welcome to The Atlanta Heights. To ensure you love the city please " +
+
               "go to see the news on what's happening or go check out the tebex!\n\n" +
 
               "**Or you can go ahead and fly right in the city!**\n\n" +
@@ -2064,7 +2358,9 @@ client.on(
             );
 
         try {
+
           await message.author.send({
+
             embeds: [
               embed,
             ],
@@ -2072,6 +2368,7 @@ client.on(
             files: [
               banner,
             ],
+
           });
 
           console.log(
@@ -2079,18 +2376,19 @@ client.on(
           );
 
         } catch (error) {
+
           console.log(
             `Could not DM ${message.author.tag}.`
           );
         }
       }
 
-      // ==================================================
-      // IMPORTANT:
-      // NO PUBLIC REPLY TO WL
-      // ==================================================
+      // ----------------------------------------------
+      // NO PUBLIC WL REPLY
+      // ----------------------------------------------
 
     } catch (error) {
+
       console.error(
         "Message handling error:",
         error
@@ -2105,8 +2403,460 @@ client.on(
 
 client.on(
   "interactionCreate",
-  async (interaction) => {
+  async interaction => {
+
     try {
+
+      // ==================================================
+      // /ADD
+      // ==================================================
+
+      if (
+        interaction.isChatInputCommand() &&
+        interaction.commandName ===
+          "add"
+      ) {
+
+        // ----------------------------------------------
+        // TICKET CHECK
+        // ----------------------------------------------
+
+        if (
+          !isTicketChannel(
+            interaction.channel
+          )
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ This command can only be used inside a ticket.",
+
+            ephemeral:
+              true,
+          });
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // STAFF CHECK
+        // ----------------------------------------------
+
+        if (
+          !isStaff(
+            interaction.member
+          )
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ Only the Staff Team can use this command.",
+
+            ephemeral:
+              true,
+          });
+
+          return;
+        }
+
+        const user =
+          interaction.options.getUser(
+            "user"
+          );
+
+        const role =
+          interaction.options.getRole(
+            "role"
+          );
+
+        // ----------------------------------------------
+        // REQUIRE ONE
+        // ----------------------------------------------
+
+        if (
+          !user &&
+          !role
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ Please select a user or a role.",
+
+            ephemeral:
+              true,
+          });
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // DON'T ALLOW BOTH
+        // ----------------------------------------------
+
+        if (
+          user &&
+          role
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ Please select either a user or a role, not both.",
+
+            ephemeral:
+              true,
+          });
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // ADD USER
+        // ----------------------------------------------
+
+        if (
+          user
+        ) {
+
+          const member =
+            await interaction.guild.members
+              .fetch(
+                user.id
+              )
+              .catch(
+                () => null
+              );
+
+          if (
+            !member
+          ) {
+
+            await interaction.reply({
+              content:
+                "❌ That user is not in this server.",
+
+              ephemeral:
+                true,
+            });
+
+            return;
+          }
+
+          await interaction.channel.permissionOverwrites.edit(
+            user.id,
+            {
+              ViewChannel:
+                true,
+
+              SendMessages:
+                true,
+
+              ReadMessageHistory:
+                true,
+
+              AttachFiles:
+                true,
+            }
+          );
+
+          await interaction.reply({
+            content:
+              `✅ ${user} has been added to this ticket.`,
+          });
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // ADD ROLE
+        // ----------------------------------------------
+
+        if (
+          role
+        ) {
+
+          if (
+            role.id ===
+            interaction.guild.id
+          ) {
+
+            await interaction.reply({
+              content:
+                "❌ You can't add the @everyone role.",
+
+              ephemeral:
+                true,
+            });
+
+            return;
+          }
+
+          await interaction.channel.permissionOverwrites.edit(
+            role.id,
+            {
+              ViewChannel:
+                true,
+
+              SendMessages:
+                true,
+
+              ReadMessageHistory:
+                true,
+
+              AttachFiles:
+                true,
+            }
+          );
+
+          await interaction.reply({
+            content:
+              `✅ ${role} has been added to this ticket.`,
+          });
+
+          return;
+        }
+      }
+
+      // ==================================================
+      // /REMOVE
+      // ==================================================
+
+      if (
+        interaction.isChatInputCommand() &&
+        interaction.commandName ===
+          "remove"
+      ) {
+
+        // ----------------------------------------------
+        // TICKET CHECK
+        // ----------------------------------------------
+
+        if (
+          !isTicketChannel(
+            interaction.channel
+          )
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ This command can only be used inside a ticket.",
+
+            ephemeral:
+              true,
+          });
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // STAFF CHECK
+        // ----------------------------------------------
+
+        if (
+          !isStaff(
+            interaction.member
+          )
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ Only the Staff Team can use this command.",
+
+            ephemeral:
+              true,
+          });
+
+          return;
+        }
+
+        const user =
+          interaction.options.getUser(
+            "user"
+          );
+
+        const role =
+          interaction.options.getRole(
+            "role"
+          );
+
+        // ----------------------------------------------
+        // REQUIRE ONE
+        // ----------------------------------------------
+
+        if (
+          !user &&
+          !role
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ Please select a user or a role.",
+
+            ephemeral:
+              true,
+          });
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // DON'T ALLOW BOTH
+        // ----------------------------------------------
+
+        if (
+          user &&
+          role
+        ) {
+
+          await interaction.reply({
+            content:
+              "❌ Please select either a user or a role, not both.",
+
+            ephemeral:
+              true,
+          });
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // REMOVE USER
+        // ----------------------------------------------
+
+        if (
+          user
+        ) {
+
+          if (
+            user.id ===
+            client.user.id
+          ) {
+
+            await interaction.reply({
+              content:
+                "❌ I can't remove myself from the ticket.",
+
+              ephemeral:
+                true,
+            });
+
+            return;
+          }
+
+          const ticketInfo =
+            getTicketInfo(
+              interaction.channel
+            );
+
+          // Don't remove ticket owner
+          if (
+            user.id ===
+            ticketInfo.ownerId
+          ) {
+
+            await interaction.reply({
+              content:
+                "❌ You can't remove the ticket owner from their own ticket.",
+
+              ephemeral:
+                true,
+            });
+
+            return;
+          }
+
+          // Don't remove staff members
+          const member =
+            await interaction.guild.members
+              .fetch(
+                user.id
+              )
+              .catch(
+                () => null
+              );
+
+          if (
+            member &&
+            isStaff(
+              member
+            )
+          ) {
+
+            await interaction.reply({
+              content:
+                "❌ You can't remove a Staff Team member from a ticket.",
+
+              ephemeral:
+                true,
+            });
+
+            return;
+          }
+
+          await interaction.channel.permissionOverwrites.delete(
+            user.id
+          );
+
+          await interaction.reply({
+            content:
+              `✅ ${user} has been removed from this ticket.`,
+          });
+
+          return;
+        }
+
+        // ----------------------------------------------
+        // REMOVE ROLE
+        // ----------------------------------------------
+
+        if (
+          role
+        ) {
+
+          if (
+            role.id ===
+            interaction.guild.id
+          ) {
+
+            await interaction.reply({
+              content:
+                "❌ You can't remove the @everyone role.",
+
+              ephemeral:
+                true,
+            });
+
+            return;
+          }
+
+          // Don't remove staff role
+          if (
+            role.id ===
+            staffRoleId
+          ) {
+
+            await interaction.reply({
+              content:
+                "❌ You can't remove the Staff Team role from a ticket.",
+
+              ephemeral:
+                true,
+            });
+
+            return;
+          }
+
+          await interaction.channel.permissionOverwrites.delete(
+            role.id
+          );
+
+          await interaction.reply({
+            content:
+              `✅ ${role} has been removed from this ticket.`,
+          });
+
+          return;
+        }
+      }
 
       // ==================================================
       // TICKET DROPDOWN
@@ -2127,12 +2877,13 @@ client.on(
 
         const selected =
           ticketCategories.find(
-            (ticket) =>
+            ticket =>
               ticket.value ===
               interaction.values[0]
           );
 
         if (!selected) {
+
           await interaction.reply({
             content:
               "❌ That ticket category is invalid.",
@@ -2150,7 +2901,7 @@ client.on(
 
         const existingTicket =
           guild.channels.cache.find(
-            (channel) =>
+            channel =>
               channel.type ===
                 ChannelType.GuildText &&
 
@@ -2162,7 +2913,10 @@ client.on(
               )
           );
 
-        if (existingTicket) {
+        if (
+          existingTicket
+        ) {
+
           await interaction.reply({
             content:
               `❌ You already have an open ticket: ${existingTicket}`,
@@ -2187,10 +2941,8 @@ client.on(
         // PERMISSIONS
         // ==================================================
 
-        const botMember =
-          guild.members.me;
-
         const permissionOverwrites = [
+
           {
             id:
               guild.roles.everyone.id,
@@ -2205,6 +2957,7 @@ client.on(
               interaction.user.id,
 
             allow: [
+
               PermissionFlagsBits.ViewChannel,
 
               PermissionFlagsBits.SendMessages,
@@ -2212,18 +2965,29 @@ client.on(
               PermissionFlagsBits.ReadMessageHistory,
 
               PermissionFlagsBits.AttachFiles,
+
             ],
           },
         ];
 
+        // ==================================================
+        // BOT PERMISSIONS
+        // ==================================================
+
+        const botMember =
+          guild.members.me;
+
         if (
           botMember
         ) {
+
           permissionOverwrites.push({
+
             id:
               botMember.id,
 
             allow: [
+
               PermissionFlagsBits.ViewChannel,
 
               PermissionFlagsBits.SendMessages,
@@ -2235,6 +2999,7 @@ client.on(
               PermissionFlagsBits.AttachFiles,
 
               PermissionFlagsBits.ManageMessages,
+
             ],
           });
         }
@@ -2246,11 +3011,14 @@ client.on(
         if (
           staffRole
         ) {
+
           permissionOverwrites.push({
+
             id:
               staffRole.id,
 
             allow: [
+
               PermissionFlagsBits.ViewChannel,
 
               PermissionFlagsBits.SendMessages,
@@ -2258,6 +3026,7 @@ client.on(
               PermissionFlagsBits.ReadMessageHistory,
 
               PermissionFlagsBits.AttachFiles,
+
             ],
           });
         }
@@ -2271,6 +3040,7 @@ client.on(
         let ticketName;
 
         do {
+
           ticketNumber =
             randomTicketNumber();
 
@@ -2279,7 +3049,7 @@ client.on(
 
         } while (
           guild.channels.cache.some(
-            (channel) =>
+            channel =>
               channel.name ===
               ticketName
           )
@@ -2291,6 +3061,7 @@ client.on(
 
         const ticketChannel =
           await guild.channels.create({
+
             name:
               ticketName,
 
@@ -2312,11 +3083,13 @@ client.on(
 
         const ticketEmbed =
           new EmbedBuilder()
+
             .setColor(
               0x0066ff
             )
 
             .setDescription(
+
               "Please provide a detailed explanation of your issue along with any screenshots or video evidence.\n\n" +
 
               "If your issue is resolved before staff responds, you may close this ticket using the **Close** button below."
@@ -2333,6 +3106,7 @@ client.on(
 
         const closeButton =
           new ButtonBuilder()
+
             .setCustomId(
               "ticket_close"
             )
@@ -2360,6 +3134,7 @@ client.on(
         // ==================================================
 
         await ticketChannel.send({
+
           content:
             staffRole
               ? `${interaction.user} ${staffRole}`
@@ -2372,6 +3147,7 @@ client.on(
           components: [
             closeRow,
           ],
+
         });
 
         // ==================================================
@@ -2379,11 +3155,13 @@ client.on(
         // ==================================================
 
         await interaction.reply({
+
           content:
             `✅ Your ticket has been created: ${ticketChannel}`,
 
           ephemeral:
             true,
+
         });
 
         return;
@@ -2404,6 +3182,7 @@ client.on(
             interaction.channel
           )
         ) {
+
           await interaction.reply({
             content:
               "❌ This is not a ticket channel.",
@@ -2417,6 +3196,7 @@ client.on(
 
         const confirmButton =
           new ButtonBuilder()
+
             .setCustomId(
               "ticket_close_confirm"
             )
@@ -2431,6 +3211,7 @@ client.on(
 
         const cancelButton =
           new ButtonBuilder()
+
             .setCustomId(
               "ticket_close_cancel"
             )
@@ -2451,12 +3232,14 @@ client.on(
             );
 
         await interaction.reply({
+
           content:
             "🔒 Are you sure you want to close this ticket?",
 
           components: [
             row,
           ],
+
         });
 
         return;
@@ -2477,6 +3260,7 @@ client.on(
             interaction.channel
           )
         ) {
+
           await interaction.reply({
             content:
               "❌ This is not a ticket channel.",
@@ -2494,26 +3278,23 @@ client.on(
             interaction.user.tag
           );
 
-        const completeData =
-          addTranscriptChannelName(
-            transcriptData,
-            interaction.channel
-          );
-
         await sendTranscript(
           interaction.guild,
-          completeData
+          transcriptData
         );
 
         await interaction.update({
+
           content:
             "🔒 Transcript saved. This ticket will close in 3 seconds.",
 
           components: [],
+
         });
 
         setTimeout(
           async () => {
+
             await interaction.channel
               .delete(
                 "Ticket closed using the Close button"
@@ -2521,6 +3302,7 @@ client.on(
               .catch(
                 () => {}
               );
+
           },
           3000
         );
@@ -2539,16 +3321,19 @@ client.on(
       ) {
 
         await interaction.update({
+
           content:
             "✅ Ticket close cancelled.",
 
           components: [],
+
         });
 
         return;
       }
 
     } catch (error) {
+
       console.error(
         "Interaction handling error:",
         error
@@ -2558,14 +3343,18 @@ client.on(
         !interaction.replied &&
         !interaction.deferred
       ) {
+
         await interaction
           .reply({
+
             content:
               "❌ Something went wrong. Check the bot console for the error.",
 
             ephemeral:
               true,
+
           })
+
           .catch(
             () => {}
           );
