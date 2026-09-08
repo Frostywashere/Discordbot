@@ -40,14 +40,19 @@ const ownerId =
 
 // STAFF
 const staffRoleId =
-  process.env.STAFF_ROLE_ID || "1543512745922531389";
+  process.env.STAFF_ROLE_ID ||
+  "1543512745922531389";
 
 const staffRoleName =
-  process.env.STAFF_ROLE_NAME || "Staff";
+  process.env.STAFF_ROLE_NAME ||
+  "Staff";
 
 // COMMANDS
-const ticketPanelCommand = "$ticketpanel";
-const purgeCommand = ".purge";
+const ticketPanelCommand =
+  "$ticketpanel";
+
+const purgeCommand =
+  ".purge";
 
 // TRANSCRIPT CHANNEL
 const transcriptChannelId =
@@ -61,10 +66,10 @@ const ticketEmojiName =
   "profile";
 
 // RAILWAY PUBLIC URL
-// Add this to Railway Variables:
-// PUBLIC_URL=https://discordbot-production-f70d.up.railway.app
 const publicUrl =
-  (process.env.PUBLIC_URL || "").replace(/\/+$/, "");
+  (process.env.PUBLIC_URL || "")
+    .replace(/^PUBLIC_URL=/i, "")
+    .replace(/\/+$/, "");
 
 // WEB PORT
 const webPort =
@@ -87,14 +92,14 @@ if (
     "PASTE_YOUR_BOT_TOKEN_HERE"
 ) {
   console.error(
-    "Missing DISCORD_TOKEN in .env / Railway Variables."
+    "Missing DISCORD_TOKEN in Railway Variables."
   );
 
   process.exit(1);
 }
 
 // ==================================================
-// CREATE TRANSCRIPT FOLDER
+// TRANSCRIPT FOLDER
 // ==================================================
 
 if (
@@ -111,26 +116,19 @@ if (
 }
 
 // ==================================================
-// CREATE DISCORD CLIENT
+// CREATE CLIENT
 // ==================================================
 
 const client =
   new Client({
-
     intents: [
-
       GatewayIntentBits.Guilds,
-
       GatewayIntentBits.GuildMessages,
-
       GatewayIntentBits.MessageContent,
-
     ],
-
     partials: [
       Partials.Channel,
     ],
-
   });
 
 // ==================================================
@@ -149,9 +147,6 @@ const ticketCategories = [
     value:
       "general_support",
 
-    channelName:
-      "ticket",
-
     categoryId:
       "1543512897953472552",
   },
@@ -165,9 +160,6 @@ const ticketCategories = [
 
     value:
       "player_report",
-
-    channelName:
-      "ticket",
 
     categoryId:
       "1545229419101036566",
@@ -183,9 +175,6 @@ const ticketCategories = [
     value:
       "donation_ticket",
 
-    channelName:
-      "ticket",
-
     categoryId:
       "1543512854072926319",
   },
@@ -199,9 +188,6 @@ const ticketCategories = [
 
     value:
       "female_verification",
-
-    channelName:
-      "ticket",
 
     categoryId:
       "1545229787327369276",
@@ -217,9 +203,6 @@ const ticketCategories = [
     value:
       "staff_reports",
 
-    channelName:
-      "ticket",
-
     categoryId:
       "1543512857935609927",
   },
@@ -233,9 +216,6 @@ const ticketCategories = [
 
     value:
       "ban_appeals",
-
-    channelName:
-      "ticket",
 
     categoryId:
       "1543512899597762580",
@@ -251,9 +231,6 @@ const ticketCategories = [
     value:
       "contact_developer",
 
-    channelName:
-      "ticket",
-
     categoryId:
       "1543512901623480360",
   },
@@ -268,10 +245,10 @@ const ticketCategories = [
     value:
       "gang_support",
 
-    channelName:
-      "ticket",
-
-    // Uses General Support category
+    // Uses General Support
+    // until you provide a
+    // separate Gang Support
+    // category ID.
     categoryId:
       "1543512897953472552",
   },
@@ -367,14 +344,19 @@ function getTicketInfo(channel) {
       );
 
     if (ownerMatch) {
+
       ticketOwnerId =
         ownerMatch[1];
+
     }
 
     if (typeMatch) {
+
       ticketType =
         typeMatch[1];
+
     }
+
   }
 
   return {
@@ -427,8 +409,8 @@ function randomTicketNumber() {
 
   return Math.floor(
     1000 +
-    Math.random() *
-      9000
+      Math.random() *
+        9000
   );
 }
 
@@ -437,23 +419,11 @@ function randomTicketNumber() {
 function makeTranscriptId() {
 
   return (
-
-    Date.now()
-      .toString(36)
-
-    +
-
-    "-"
-
-    +
-
+    Date.now().toString(36) +
+    "-" +
     Math.random()
       .toString(36)
-      .substring(
-        2,
-        12
-      )
-
+      .substring(2, 12)
   );
 }
 
@@ -473,17 +443,10 @@ async function fetchAllMessages(
 
     const batch =
       await channel.messages.fetch({
-
-        limit:
-          100,
-
+        limit: 100,
         ...(before
-          ? {
-              before:
-                before,
-            }
+          ? { before }
           : {}),
-
       });
 
     if (!batch.size) {
@@ -495,8 +458,7 @@ async function fetchAllMessages(
     );
 
     if (
-      batch.size <
-      100
+      batch.size < 100
     ) {
       break;
     }
@@ -566,7 +528,7 @@ async function createTranscript(
     makeTranscriptId();
 
   // ==================================================
-  // TEXT TRANSCRIPT
+  // TEXT FILE
   // ==================================================
 
   let text = "";
@@ -593,7 +555,7 @@ async function createTranscript(
     `Messages: ${messages.length}\n`;
 
   text +=
-    `Created Transcript: ${new Date().toISOString()}\n`;
+    `Created: ${new Date().toLocaleString()}\n`;
 
   text +=
     "====================================\n\n";
@@ -614,24 +576,15 @@ async function createTranscript(
 
           const authorName =
             escapeHtml(
-
               message.author?.tag ||
-
-              message.author?.username ||
-
-              "Unknown"
-
+                message.author?.username ||
+                "Unknown"
             );
 
           const avatar =
             message.author?.displayAvatarURL({
-
-              extension:
-                "png",
-
-              size:
-                64,
-
+              extension: "png",
+              size: 64,
             }) || "";
 
           const content =
@@ -643,8 +596,7 @@ async function createTranscript(
               "<br>"
             );
 
-          // EMBEDS
-          const embedsHtml =
+          const embedHtml =
             message.embeds
               .map(
                 (embed) => {
@@ -665,7 +617,6 @@ async function createTranscript(
                     );
 
                   return `
-
                     <div class="discord-embed">
 
                       ${
@@ -689,126 +640,95 @@ async function createTranscript(
                       }
 
                     </div>
-
                   `;
-
                 }
               )
               .join("");
 
-          // ATTACHMENTS
           const attachmentsHtml =
             Array.from(
               message.attachments.values()
             )
-            .map(
-              (attachment) => {
+              .map(
+                (attachment) => {
 
-                const url =
-                  escapeHtml(
-                    attachment.url
-                  );
+                  const url =
+                    escapeHtml(
+                      attachment.url
+                    );
 
-                const name =
-                  escapeHtml(
+                  const name =
+                    escapeHtml(
+                      attachment.name ||
+                        attachment.url
+                    );
 
-                    attachment.name ||
+                  const isImage =
+                    typeof attachment.contentType ===
+                      "string" &&
+                    attachment.contentType.startsWith(
+                      "image/"
+                    );
 
-                    attachment.url
+                  return `
+                    <div class="attachment">
 
-                  );
+                      ${
+                        isImage
+                          ? `
+                            <img
+                              class="attachment-image"
+                              src="${url}"
+                              alt="${name}"
+                            >
+                          `
+                          : ""
+                      }
 
-                const isImage =
-                  typeof attachment.contentType ===
-                    "string" &&
+                      <a
+                        href="${url}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        ${name}
+                      </a>
 
-                  attachment.contentType.startsWith(
-                    "image/"
-                  );
+                    </div>
+                  `;
+                }
+              )
+              .join("");
 
-                return `
-
-                  <div class="attachment">
-
-                    ${
-                      isImage
-                        ? `
-
-                          <img
-
-                            class="attachment-image"
-
-                            src="${url}"
-
-                            alt="${name}"
-
-                          >
-
-                        `
-                        : ""
-                    }
-
-                    <a
-
-                      href="${url}"
-
-                      target="_blank"
-
-                      rel="noopener noreferrer"
-
-                    >
-
-                      ${name}
-
-                    </a>
-
-                  </div>
-
-                `;
-
-              }
-            )
-            .join("");
-
-          // ==================================================
-          // ADD MESSAGE TO TXT
-          // ==================================================
-
+          // Add to TXT
           text +=
             `[${new Date(
               message.createdTimestamp
-            ).toISOString()}] `;
+            ).toLocaleString()}] `;
 
           text +=
             `${message.author?.tag || "Unknown"}: `;
 
-          if (
-            message.content
-          ) {
+          text +=
+            message.content ||
+            "[No message text]";
 
-            text +=
-              `${message.content}\n`;
-
-          } else {
-
-            text +=
-              `[No message text]\n`;
-          }
+          text +=
+            "\n";
 
           if (
             message.embeds.length
           ) {
 
             for (
-              const embed of message.embeds
+              const embed of
+                message.embeds
             ) {
 
-              if (
-                embed.title
-              ) {
+              if (embed.title) {
 
                 text +=
                   `Embed Title: ${embed.title}\n`;
+
               }
 
               if (
@@ -817,8 +737,11 @@ async function createTranscript(
 
                 text +=
                   `Embed Description: ${embed.description}\n`;
+
               }
+
             }
+
           }
 
           if (
@@ -826,35 +749,29 @@ async function createTranscript(
           ) {
 
             for (
-              const attachment of message.attachments.values()
+              const attachment of
+                message.attachments.values()
             ) {
 
               text +=
                 `Attachment: ${attachment.url}\n`;
+
             }
+
           }
 
           text +=
             "\n";
 
-          // ==================================================
-          // HTML MESSAGE
-          // ==================================================
-
           return `
-
             <div class="message">
 
               <img
-
                 class="avatar"
-
                 src="${escapeHtml(
                   avatar
                 )}"
-
                 alt="avatar"
-
               >
 
               <div class="message-body">
@@ -876,32 +793,27 @@ async function createTranscript(
                 ${
                   content
                     ? `
-
                       <div class="message-content">
-
                         ${content}
-
                       </div>
-
                     `
                     : ""
                 }
 
-                ${embedsHtml}
+                ${embedHtml}
 
                 ${attachmentsHtml}
 
               </div>
 
             </div>
-
           `;
         }
       )
       .join("\n");
 
   // ==================================================
-  // SAVE TXT
+  // TXT FILE
   // ==================================================
 
   const txtFileName =
@@ -922,7 +834,7 @@ async function createTranscript(
   );
 
   // ==================================================
-  // CREATE WEBPAGE
+  // HTML PAGE
   // ==================================================
 
   const htmlFilePath =
@@ -937,14 +849,11 @@ async function createTranscript(
 
   const guildIcon =
     guild?.iconURL({
-      extension:
-        "png",
-      size:
-        128,
+      extension: "png",
+      size: 128,
     }) || "";
 
   const html = `
-
 <!DOCTYPE html>
 
 <html lang="en">
@@ -961,7 +870,8 @@ async function createTranscript(
 <title>
 ${escapeHtml(
   guildName
-)} - ${escapeHtml(
+)} -
+${escapeHtml(
   channel.name
 )}
 </title>
@@ -1113,10 +1023,7 @@ body {
   grid-template-columns:
     repeat(
       3,
-      minmax(
-        0,
-        1fr
-      )
+      minmax(0, 1fr)
     );
 
   gap:
@@ -1377,19 +1284,13 @@ body {
     ${
       guildIcon
         ? `
-
           <img
-
             class="server-icon"
-
             src="${escapeHtml(
               guildIcon
             )}"
-
             alt="Server Icon"
-
           >
-
         `
         : ""
     }
@@ -1397,32 +1298,24 @@ body {
     <div>
 
       <div class="server-name">
-
         ${escapeHtml(
           guildName
         )}
-
       </div>
 
       <div class="ticket-name">
-
         ${escapeHtml(
           channel.name
         )}
-
       </div>
 
       <div class="message-count">
-
         ${messages.length}
-
         message${
-          messages.length ===
-          1
+          messages.length === 1
             ? ""
             : "s"
         }
-
       </div>
 
     </div>
@@ -1493,9 +1386,7 @@ body {
   }
 
   <div class="footer">
-
     Atlanta Heights RP • Ticket Transcript
-
   </div>
 
 </div>
@@ -1503,7 +1394,6 @@ body {
 </body>
 
 </html>
-
 `;
 
   fs.writeFileSync(
@@ -1514,17 +1404,13 @@ body {
 
   return {
 
-    transcriptId:
-      transcriptId,
+    transcriptId,
 
-    txtFilePath:
-      txtFilePath,
+    txtFilePath,
 
-    txtFileName:
-      txtFileName,
+    txtFileName,
 
-    htmlFilePath:
-      htmlFilePath,
+    htmlFilePath,
 
     ticketName:
       channel.name,
@@ -1535,8 +1421,7 @@ body {
     ownerId:
       ticketInfo.ticketOwnerId,
 
-    ownerName:
-      ownerName,
+    ownerName,
 
     messageCount:
       messages.length,
@@ -1545,7 +1430,7 @@ body {
 }
 
 // ==================================================
-// SEND TRANSCRIPT TO TRANSCRIPT CHANNEL
+// SEND TRANSCRIPT TO TRANSCRIPT CHANNEL ONLY
 // ==================================================
 
 async function sendTranscriptToChannel(
@@ -1570,7 +1455,6 @@ async function sendTranscriptToChannel(
       return false;
     }
 
-    // DIRECT LINK
     let transcriptUrl =
       null;
 
@@ -1580,6 +1464,7 @@ async function sendTranscriptToChannel(
         `${publicUrl}/transcript/${encodeURIComponent(
           transcript.transcriptId
         )}`;
+
     }
 
     // ==================================================
@@ -1642,13 +1527,15 @@ async function sendTranscriptToChannel(
 
         });
 
-    // ==================================================
-    // DIRECT LINK BUTTON
-    // ==================================================
-
     const components = [];
 
-    if (transcriptUrl) {
+    // ==================================================
+    // DIRECT LINK ONLY IN TRANSCRIPT CHANNEL
+    // ==================================================
+
+    if (
+      transcriptUrl
+    ) {
 
       const directLinkButton =
         new ButtonBuilder()
@@ -1681,7 +1568,7 @@ async function sendTranscriptToChannel(
     }
 
     // ==================================================
-    // SEND TRANSCRIPT
+    // SEND FILE ONLY HERE
     // ==================================================
 
     await transcriptChannel.send({
@@ -1745,10 +1632,8 @@ async function purgeChannel(
     const recent =
       batch.filter(
         (message) =>
-
           Date.now() -
             message.createdTimestamp <
-
           14 *
             24 *
             60 *
@@ -1759,10 +1644,8 @@ async function purgeChannel(
     const old =
       batch.filter(
         (message) =>
-
           Date.now() -
             message.createdTimestamp >=
-
           14 *
             24 *
             60 *
@@ -1770,7 +1653,9 @@ async function purgeChannel(
             1000
       );
 
-    if (recent.size) {
+    if (
+      recent.size
+    ) {
 
       const deleted =
         await channel.bulkDelete(
@@ -1780,6 +1665,7 @@ async function purgeChannel(
 
       deletedCount +=
         deleted.size;
+
     }
 
     for (
@@ -1794,6 +1680,7 @@ async function purgeChannel(
         );
 
       deletedCount++;
+
     }
 
     if (
@@ -1926,14 +1813,6 @@ client.once(
       `Public URL: ${publicUrl || "NOT SET"}`
     );
 
-    console.log(
-      `Ticket panel command: ${ticketPanelCommand}`
-    );
-
-    console.log(
-      `Purge command: ${purgeCommand}`
-    );
-
   }
 );
 
@@ -1991,7 +1870,6 @@ client.on(
           message.channel.type !==
           ChannelType.GuildText
         ) {
-
           return;
         }
 
@@ -2045,6 +1923,7 @@ client.on(
             .catch(
               () => {}
             );
+
         }
 
         return;
@@ -2182,68 +2061,10 @@ client.on(
 
           );
 
-          if (
-            publicUrl
-          ) {
-
-            const link =
-              `${publicUrl}/transcript/${encodeURIComponent(
-                transcript.transcriptId
-              )}`;
-
-            const button =
-              new ButtonBuilder()
-
-                .setLabel(
-                  "Direct Link"
-                )
-
-                .setEmoji(
-                  "🔗"
-                )
-
-                .setStyle(
-                  ButtonStyle.Link
-                )
-
-                .setURL(
-                  link
-                );
-
-            const row =
-              new ActionRowBuilder()
-                .addComponents(
-                  button
-                );
-
-            await message.reply({
-
-              content:
-                "✅ Transcript saved and sent to the transcript channel.",
-
-              components: [
-                row,
-              ],
-
-              files: [
-                transcript.txtFilePath,
-              ],
-
-            });
-
-          } else {
-
-            await message.reply({
-
-              content:
-                "✅ Transcript saved and sent to the transcript channel. Add PUBLIC_URL to Railway Variables for the Direct Link button.",
-
-              files: [
-                transcript.txtFilePath,
-              ],
-
-            });
-          }
+          // ONLY THIS MESSAGE IN THE TICKET
+          await message.reply(
+            "✅ Transcript sent."
+          );
 
           return;
         }
@@ -2332,7 +2153,7 @@ client.on(
       }
 
       // ==================================================
-      // WL SYSTEM
+      // WL
       // ==================================================
 
       if (
@@ -2405,6 +2226,7 @@ client.on(
           "Member was given the Allowlisted role."
 
         );
+
       }
 
       // ==================================================
@@ -2540,7 +2362,7 @@ client.on(
         }
 
         // ==================================================
-        // CHECK EXISTING TICKET
+        // EXISTING TICKET
         // ==================================================
 
         const existingTicket =
@@ -2559,7 +2381,9 @@ client.on(
 
           );
 
-        if (existingTicket) {
+        if (
+          existingTicket
+        ) {
 
           await interaction.reply({
 
@@ -2594,9 +2418,7 @@ client.on(
               guild.roles.everyone.id,
 
             deny: [
-
               PermissionFlagsBits.ViewChannel,
-
             ],
 
           },
@@ -2641,7 +2463,7 @@ client.on(
 
         ];
 
-        // STAFF ACCESS
+        // STAFF
         if (
           staffRole
         ) {
@@ -2668,20 +2490,15 @@ client.on(
         }
 
         // ==================================================
-        // RANDOM TICKET NAME
+        // RANDOM TICKET NUMBER
         // ==================================================
-
-        let ticketNumber;
 
         let ticketName;
 
         do {
 
-          ticketNumber =
-            randomTicketNumber();
-
           ticketName =
-            `ticket-${ticketNumber}`;
+            `ticket-${randomTicketNumber()}`;
 
         } while (
 
@@ -2696,7 +2513,7 @@ client.on(
         );
 
         // ==================================================
-        // CREATE CHANNEL
+        // CREATE TICKET
         // ==================================================
 
         const ticketChannel =
@@ -2719,7 +2536,7 @@ client.on(
           });
 
         // ==================================================
-        // TICKET OPEN EMBED
+        // TICKET OPEN MESSAGE
         // ==================================================
 
         const ticketEmbed =
@@ -2780,7 +2597,6 @@ client.on(
         await ticketChannel.send({
 
           content:
-
             staffRole
 
               ? `${interaction.user} ${staffRole}`
@@ -2798,7 +2614,7 @@ client.on(
         });
 
         // ==================================================
-        // TICKET CREATED
+        // CREATED
         // ==================================================
 
         await interaction.reply({
@@ -2828,11 +2644,9 @@ client.on(
       ) {
 
         if (
-
           !isTicketChannel(
             interaction.channel
           )
-
         ) {
 
           await interaction.reply({
@@ -2963,23 +2777,20 @@ client.on(
         });
 
         setTimeout(
-
           async () => {
 
             await interaction.channel
+
               .delete(
-
                 "Ticket closed using Close button"
-
               )
+
               .catch(
                 () => {}
               );
 
           },
-
           3000
-
         );
 
         return;
@@ -3040,6 +2851,7 @@ client.on(
           .catch(
             () => {}
           );
+
       }
 
     }
@@ -3059,11 +2871,8 @@ const webServer =
 
         const url =
           new URL(
-
             req.url,
-
             `http://localhost:${webPort}`
-
           );
 
         // ==================================================
@@ -3080,10 +2889,8 @@ const webServer =
             200,
 
             {
-
               "Content-Type":
                 "text/html; charset=utf-8",
-
             }
 
           );
@@ -3097,33 +2904,22 @@ const webServer =
             <head>
 
               <title>
-                Atlanta Heights
+                Atlanta Heights Transcripts
               </title>
 
             </head>
 
             <body
-
               style="
-
                 margin:0;
-
                 background:#1e2028;
-
-                color:#ffffff;
-
+                color:white;
                 font-family:Arial;
-
                 display:flex;
-
                 align-items:center;
-
                 justify-content:center;
-
                 height:100vh;
-
               "
-
             >
 
               <div
@@ -3177,16 +2973,11 @@ const webServer =
           ) {
 
             res.writeHead(
-
               400,
-
               {
-
                 "Content-Type":
                   "text/plain; charset=utf-8",
-
               }
-
             );
 
             res.end(
@@ -3216,10 +3007,8 @@ const webServer =
               404,
 
               {
-
                 "Content-Type":
                   "text/html; charset=utf-8",
-
               }
 
             );
@@ -3231,21 +3020,13 @@ const webServer =
               <html>
 
               <body
-
                 style="
-
                   margin:0;
-
                   padding:40px;
-
                   background:#1e2028;
-
                   color:white;
-
                   font-family:Arial;
-
                 "
-
               >
 
                 <h1>
@@ -3253,7 +3034,7 @@ const webServer =
                 </h1>
 
                 <p>
-                  This transcript may have been removed.
+                  This transcript may have been deleted.
                 </p>
 
               </body>
@@ -3338,6 +3119,7 @@ const webServer =
         res.end(
           "Internal server error."
         );
+
       }
 
     }
@@ -3368,7 +3150,7 @@ webServer.listen(
     } else {
 
       console.log(
-        "PUBLIC_URL is not set. Direct Link buttons will not work."
+        "PUBLIC_URL is not set."
       );
 
     }
