@@ -37,10 +37,10 @@ const channelId =
   process.env.CHANNEL_ID || "1559369861602353172";
 
 const roleName =
-  process.env.ROLE_NAME || "Allowlisted";
+  process.env.ROLE_NAME || "[Allowlisted] ";
 
 const removeRoleName =
-  process.env.REMOVE_ROLE_NAME || "Non Whitelisted";
+  process.env.REMOVE_ROLE_NAME || "[not-whitelisted] ";
 
 // ==================================================
 // STAFF SETTINGS
