@@ -314,7 +314,7 @@ const ticketCategories = [
       "Clothing Development",
 
     description:
-      "Open this ticket if you have any questions about clothing or need assistance with clothing-related matters.",
+      "Get help with clothing development or clothing-related questions",
 
     value:
       "clothing_development",
