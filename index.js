@@ -93,12 +93,8 @@ const alertCommand =
 // CUSTOM EMOJI
 // ==================================================
 
-const ticketEmojiId =
-  null;
-
-const ticketEmojiName =
-  "🎟️";
-
+const ticketEmojiId = "1566663798645854339";
+const ticketEmojiName = "largewatermark";
 // ==================================================
 // FILE PATHS
 // ==================================================
